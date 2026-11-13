@@ -1,6 +1,8 @@
 # DAV Avatar Kiosk
 
-A wrapper page around the LiveAvatar iframe embed. It shows a free idle screen until someone taps, then runs a live session with a time limit, and goes back to idle on its own. Credits are only used while a session is live: ending a session removes the iframe, which closes the stream.
+A wrapper page around the LiveAvatar iframe embed. The avatar waits on screen, a visitor taps **Chat now** once to talk, the session runs with a time limit, and the page resets itself for the next visitor. Ending a session removes the iframe, which closes the stream.
+
+Live: https://dav-daitech.github.io/avatar-kiosk/ (GitHub Pages from `main`). The LiveAvatar embed link is **not** stored in this repo, because anyone with it can start sessions on the account's credits. Pass it with `?embed=` in a privately shared link, or paste it into the setup screen on the kiosk.
 
 ## Two layouts
 
@@ -18,10 +20,16 @@ The wrapper adds `?orientation=` to the LiveAvatar embed URL from each layout's 
 
 ## How a visit works
 
-1. **Idle** (free): your own screen or video with "Chạm để trò chuyện".
-2. **Tap:** the LiveAvatar embed opens on its own pre-start screen (language picker plus **Chat now**). The countdown waits, and a "Nhấn Chat now" hint points at the button. If nobody taps within 45 s, the page goes back to idle.
-3. **Tap inside the avatar** (normally Chat now): the session countdown starts, and zoom is applied. Zoom waits until now so the Chat now bar is never cropped off.
-4. **Time up / End / Esc:** the iframe is removed (the stream stops), a thank-you screen shows, then the page goes back to idle.
+**One tap (default, `?start=one-tap`)**
+1. **Idle:** LiveAvatar's own start screen: the avatar standing, with a language picker and **Chat now**. The wrapper adds the DAV name and a "Nhấn Chat now" hint on top. It reloads every 15 minutes so it never goes stale.
+2. **Tap Chat now:** the session countdown starts, the End button appears, and zoom is applied. Zoom waits until now so the Chat now bar is never cropped off.
+3. **Time up / End:** the iframe is removed (the stream stops), a thank-you screen shows, then a fresh avatar is waiting again.
+
+LiveAvatar has no documented way to skip its Chat now button, and a page can't click inside another site's frame. One tap on Chat now is therefore the minimum with the iframe embed. True zero-button starts, such as starting on our own tap or with a motion sensor, would need LiveAvatar's Web SDK plus a small server that holds the API key.
+
+**Two taps (`?start=two-tap`)**: shows our own idle screen or idle video first. A tap opens the embed on Chat now, and if nobody presses it within 45 s, the page goes back to idle.
+
+A tap anywhere inside the avatar counts as the start, including the language picker, so the timer can start a few seconds early.
 
 ## Setup (no API key needed)
 
@@ -33,7 +41,7 @@ The wrapper adds `?orientation=` to the LiveAvatar embed URL from each layout's 
 
 | Input | Action |
 |---|---|
-| Tap the idle screen / Space / Enter | Start a session |
+| Chat now (one tap) / tap the idle screen, Space, Enter (two taps) | Start |
 | End button / Esc | End the session |
 | `Shift+S` | Setup |
 | `Shift+D` or `?debug` | Debug log (also logs any messages the LiveAvatar iframe posts) |
@@ -61,6 +69,6 @@ On macOS, replace `google-chrome` with `"/Applications/Google Chrome.app/Content
 
 The mic needs HTTPS or localhost, so host the page on GitHub Pages (or similar) for the real kiosk.
 
-## Idle video
+## Idle video (two-tap mode only)
 
 Put an MP4 next to `index.html` (for example `idle-vertical.mp4` and `idle-horizontal.mp4`) and set it in setup. Frame it the same way as the live avatar so switching between idle and live looks smooth. If it's empty, an animated mic screen is shown instead.
