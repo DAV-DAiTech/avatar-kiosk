@@ -54,6 +54,8 @@ npx vercel deploy --prod --yes
 
 The page calls `https://dav-avatar-kiosk-api.vercel.app` (set in `API_BASE_DEFAULT` in `index.html`).
 
+The Vercel project (`hacktoded/dav-avatar-kiosk-api`) is **not** connected to GitHub, because a push would otherwise deploy the repo root, which has no API. Pushing to GitHub updates only the page. After changing anything in `server/`, redeploy it with `npx vercel deploy --prod --yes` from `server/`.
+
 ## Testing
 
 **Run everything locally.** The local server reads the key from `.env`:
