@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/dav-logo.png">
 <link rel="preload" as="image" href="assets/avatar-idle.jpg">
 <link rel="modulepreload" href="vendor/liveavatar-web-sdk-0.0.20.min.js">
 <style>
@@ -74,13 +75,15 @@ body[data-layout="horizontal"] .shade {
               linear-gradient(to right, rgba(11,23,48,0) 80%, var(--bg) 100%); }
 
 /* ---------- brand ---------- */
-.brand { position: absolute; display: flex; align-items: center; gap: 1.6cqmin; z-index: 3; }
-body[data-layout="vertical"]   .brand { top: 3cqh; left: 5cqw; }
-body[data-layout="horizontal"] .brand { top: 5cqh; left: calc(56cqw + 3.5cqw); }
-.brand-mark { width: 7.5cqmin; height: 7.5cqmin; border-radius: 1.8cqmin; display: grid; place-items: center;
-  background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 2.5cqmin; letter-spacing: .02em; }
-.brand-t1 { font-weight: 700; font-size: 3cqmin; line-height: 1.15; }
-.brand-t2 { color: var(--ink-dim); font-size: 2.2cqmin; margin-top: .3cqmin; }
+.brand { position: absolute; display: flex; align-items: center; gap: 2cqmin; z-index: 3; }
+body[data-layout="vertical"]   .brand { top: 2.4cqh; left: 4.5cqw; }
+body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(56cqw + 3.5cqw); }
+/* Academy logo on a white emblem so its blue/red read on the dark theme */
+.brand-mark { flex: none; width: 9.5cqmin; height: 9.5cqmin; border-radius: 50%; display: grid; place-items: center;
+  background: #fff; padding: 1cqmin; box-shadow: 0 .6cqmin 2.4cqmin rgba(0,0,0,.35), 0 0 0 .35cqmin rgba(226,180,75,.85); }
+.brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.brand-t1 { font-weight: 700; font-size: 2.7cqmin; line-height: 1.15; }
+.brand-t2 { color: var(--ink-dim); font-size: 1.9cqmin; margin-top: .3cqmin; }
 
 /* ---------- timer pill (live only) ---------- */
 .timer { position: absolute; top: 3cqh; right: 5cqw; z-index: 3; display: none;
@@ -97,8 +100,8 @@ body.st-live .bar { display: block; }
 .side { display: none; }
 body[data-layout="horizontal"] .side {
   display: flex; flex-direction: column; position: absolute; top: 0; bottom: 0; left: 56cqw; right: 0;
-  padding: 17cqh 3.5cqw 0; background: var(--bg); z-index: 2; }
-.side h1 { font-size: 4.6cqh; line-height: 1.15; font-weight: 700; }
+  padding: 16cqh 3.5cqw 0; background: var(--bg); z-index: 2; }
+.side h1 { font-size: 3.6cqh; line-height: 1.15; font-weight: 700; }
 .side .intro { color: var(--ink-dim); font-size: 2.5cqh; line-height: 1.45; margin-top: 1.6cqh; max-width: 60ch; }
 .steps { list-style: none; margin-top: 3cqh; display: grid; gap: 1.4cqh; }
 .steps li { display: flex; gap: 1.4cqw; align-items: center; font-size: 2.4cqh; }
@@ -125,8 +128,13 @@ body[data-layout="horizontal"] #captions { left: 4cqw; width: 48cqw; bottom: 38c
 
 /* ---------- dock: push-to-talk + end ---------- */
 .dock { position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
-body[data-layout="vertical"]   .dock { left: 0; right: 0; bottom: 5cqh; }
-body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 5cqh; }
+body[data-layout="vertical"]   .dock { left: 0; right: 0; bottom: 6.5cqh; }
+body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 7.5cqh; }
+
+/* ---------- credit line, bottom centre ---------- */
+.credit { position: absolute; left: 0; right: 0; bottom: 1.8cqh; z-index: 4; text-align: center; pointer-events: none;
+  color: var(--ink-dim); font-size: 1.9cqmin; letter-spacing: .02em; opacity: .85; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.credit b { color: var(--accent); font-weight: 600; }
 .ptt-row { position: relative; display: flex; align-items: center; justify-content: center; }
 #ptt { position: relative; width: var(--ptt); height: var(--ptt); border-radius: 50%; touch-action: none;
   display: grid; place-items: center; background: var(--accent); color: var(--accent-ink);
@@ -219,7 +227,7 @@ body.debug #debug { display: block; }
   <div class="bar" id="bar"></div>
 
   <header class="brand">
-    <div class="brand-mark">DAV</div>
+    <div class="brand-mark"><img src="assets/dav-logo.png" alt="Học viện Ngoại giao"></div>
     <div>
       <div class="brand-t1" data-t="brand1"></div>
       <div class="brand-t2" data-t="brand2"></div>
@@ -259,6 +267,7 @@ body.debug #debug { display: block; }
   </div>
 
   <div class="overlay" id="thanks"><div><h2 data-t="thanks"></h2><p data-t="thanksSub"></p></div></div>
+  <div class="credit">Developed by <b>DaiTech</b> – CLB AI và Công nghệ Học viện Ngoại giao</div>
   <div class="toast" id="toast"></div>
   <div id="corner" aria-hidden="true"></div>
 </div>
