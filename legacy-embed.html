@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DAV Avatar Kiosk (legacy iframe embed)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   DAV Avatar Kiosk — wrapper around the LiveAvatar iframe embed.
+
+   Two layouts (pick with ?layout=vertical or ?layout=horizontal,
+   or in the setup panel — Shift+S):
+     vertical   — 9:16 portrait screen, full-body avatar fills it
+     horizontal — 16:9 landscape screen, half-body avatar on the left,
+                  info / suggested-questions panel on the right
+
+   States:  setup → idle → live → thanks → idle …
+   Credits are used ONLY while the iframe is mounted (live state).
+   ================================================================ */
+:root {
+  --bg: #0b1730;
+  --bg-2: #13254a;
+  --ink: #f4f6fb;
+  --ink-dim: #a9b4cc;
+  --line: #2a3d66;
+  --accent: #e2b44b;
+  --danger: #d9534f;
+  --panel: rgba(11, 23, 48, .78);
+  --zoom: 1;
+}
+body[data-layout="vertical"]   { --arw: 9;  --arh: 16; --avatar-w: 100%; }
+body[data-layout="horizontal"] { --arw: 16; --arh: 9;  --avatar-w: 62%;  }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%; overflow: hidden; background: #000; color: var(--ink);
+  font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+body { display: flex; align-items: center; justify-content: center; }
+body.hide-cursor, body.hide-cursor * { cursor: none !important; }
+
+/* The stage keeps the target screen's aspect ratio, so a laptop preview
+   looks like the real kiosk. Add ?fill to stretch to any screen instead. */
+#stage {
+  position: relative; overflow: hidden; background: var(--bg);
+  width:  min(100vw, calc(100vh * var(--arw) / var(--arh)));
+  height: min(100vh, calc(100vw * var(--arh) / var(--arw)));
+  container-type: size;
+}
+body.fill #stage { width: 100vw; height: 100vh; }
+
+.screen { position: absolute; inset: 0; display: none; }
+.screen.on { display: block; }
+
+/* ---------- avatar area (full stage in vertical, left 62% in horizontal) ---------- */
+.avatar-area {
+  position: absolute; top: 0; bottom: 0; left: 0; width: var(--avatar-w); overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 30%, var(--bg-2), var(--bg));
+}
+
+/* ---------- IDLE ---------- */
+#idle { cursor: pointer; }
+#idleVideo { position: absolute; inset: 0; width: 100%; height: 100%; }
+body[data-layout="vertical"]   #idleVideo { object-fit: contain; object-position: 50% 100%; } /* never crop the feet */
+body[data-layout="horizontal"] #idleVideo { object-fit: cover;   object-position: 50% 0%;   } /* keep the head in frame */
+#idleFallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.pulse {
+  width: 42cqmin; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, rgba(226,180,75,.35), rgba(226,180,75,0) 70%);
+  display: flex; align-items: center; justify-content: center;
+  animation: breathe 3.2s ease-in-out infinite;
+}
+.pulse svg { width: 38%; height: 38%; color: var(--accent); }
+@keyframes breathe { 0%,100% { transform: scale(.92); opacity: .75 } 50% { transform: scale(1.04); opacity: 1 } }
+
+.brand {
+  position: absolute; top: 2.2cqh; text-align: center; z-index: 2;
+  font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim);
+}
+body[data-layout="vertical"]   .brand { left: 0; right: 0; font-size: 2.2cqw; }
+body[data-layout="horizontal"] .brand { left: 62%; right: 0; padding: 0 3cqw; font-size: 1.15cqw; top: 5cqh; }
+
+/* prompt: bottom overlay (vertical) / right-hand panel (horizontal) */
+.prompt h1 { font-weight: 700; letter-spacing: -.01em; line-height: 1.15; }
+.prompt .en { color: var(--ink-dim); margin-top: .4em; }
+.tap-hint {
+  display: inline-block; margin-top: 1.4em; padding: .7em 1.6em; border-radius: 999px;
+  background: var(--accent); color: #1b1300; font-weight: 700;
+  animation: nudge 2.4s ease-in-out infinite;
+}
+@keyframes nudge { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+
+body[data-layout="vertical"] .prompt {
+  position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
+  padding: 8cqh 6cqw 6cqh;
+  background: linear-gradient(to top, rgba(11,23,48,.94) 45%, rgba(11,23,48,0));
+}
+body[data-layout="vertical"] .prompt h1 { font-size: 6.4cqw; }
+body[data-layout="vertical"] .prompt .en { font-size: 3.4cqw; }
+body[data-layout="vertical"] .tap-hint { font-size: 3.6cqw; }
+
+.side {
+  position: absolute; top: 0; bottom: 0; right: 0; width: calc(100% - var(--avatar-w));
+  background: linear-gradient(160deg, var(--bg-2), var(--bg));
+  border-left: 1px solid var(--line);
+  display: flex; flex-direction: column; justify-content: center; padding: 10cqh 3.2cqw 6cqh;
+}
+body[data-layout="vertical"] .side { display: contents; } /* in vertical, its children float over the avatar */
+body[data-layout="horizontal"] .prompt h1 { font-size: 3.1cqw; }
+body[data-layout="horizontal"] .prompt .en { font-size: 1.6cqw; }
+body[data-layout="horizontal"] .tap-hint { font-size: 1.6cqw; }
+
+.suggest { margin-top: 4cqh; }
+.suggest h3 { font-size: 1.1cqw; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); font-weight: 500; margin-bottom: 1.2cqh; }
+.suggest li {
+  list-style: none; margin-top: 1.2cqh; padding: 1.4cqh 1.2cqw; border-radius: 1cqw;
+  background: rgba(255,255,255,.05); border: 1px solid var(--line); font-size: 1.35cqw;
+}
+body[data-layout="vertical"] .suggest { display: none; }
+
+/* ---------- LIVE ---------- */
+#frameHost { position: absolute; inset: 0; overflow: hidden; }
+#frameHost iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+/* Horizontal layout + tall (full-body) feed, before Chat now: show the embed as a 9:16 card centred
+   on the dark background, so there are no white bars beside the avatar. */
+body.feed-tall[data-layout="horizontal"] #live:not(.talking) #frameHost iframe {
+  width: calc(100cqh * 9 / 16); left: calc(50% - 100cqh * 9 / 32);
+}
+
+/* Waiting (embed's own start screen) vs talking */
+#live:not(.talking) #timeLeft, #live:not(.talking) #bar { display: none; }
+body.one-tap #live:not(.talking) #endBtn { display: none; }
+#live:not(.talking) .when-talking, #live.talking .when-waiting { display: none !important; }
+#live.talking .live-brand { display: none; }
+.live-brand { pointer-events: none; }
+.live-brand span { display: inline-block; padding: .45em 1.1em; border-radius: 999px; background: var(--panel); }
+body[data-layout="horizontal"] .live-brand span { background: none; padding: 0; }
+/* Zoom (>1) crops a full-body feed to half body by making the iframe itself bigger, anchored top-centre,
+   so LiveAvatar renders at full resolution. Only applied once the visitor has pressed "Chat now",
+   so the embed's own Chat-now bar at the bottom is never cropped off. */
+#live.talking #frameHost iframe {
+  width: calc(100% * var(--zoom)); height: calc(100% * var(--zoom));
+  left: calc(50% - 50% * var(--zoom));
+}
+#bar {
+  position: absolute; top: 0; left: 0; height: .6cqh; min-height: 4px; width: 100%; z-index: 3;
+  background: var(--accent); transform-origin: left; pointer-events: none;
+}
+#bar.warn { background: var(--danger); }
+#warnToast {
+  position: absolute; left: calc(var(--avatar-w) / 2); top: 16%; transform: translateX(-50%); z-index: 3;
+  padding: .8em 1.3em; border-radius: 14px; background: var(--panel); text-align: center;
+  pointer-events: none; opacity: 0; transition: opacity .4s; white-space: nowrap;
+}
+body[data-layout="vertical"]   #warnToast { font-size: 3.4cqw; }
+body[data-layout="horizontal"] #warnToast { font-size: 1.6cqw; }
+#warnToast.show { opacity: 1; }
+#startHint {
+  position: absolute; left: calc(var(--avatar-w) / 2); bottom: 15%; transform: translateX(-50%); z-index: 3;
+  padding: .8em 1.3em; border-radius: 14px; background: var(--panel); text-align: center;
+  pointer-events: none; opacity: 0; transition: opacity .4s; white-space: nowrap;
+}
+#startHint small { display: block; margin-top: .25em; font-size: .7em; color: var(--ink-dim); }
+#startHint.show { opacity: 1; animation: nudgeX 2.4s ease-in-out infinite; }
+@keyframes nudgeX { 0%,100% { transform: translate(-50%, 0) } 50% { transform: translate(-50%, 6px) } } /* bob toward the button */
+body[data-layout="vertical"]   #startHint { font-size: 3.6cqw; }
+body[data-layout="horizontal"] #startHint { font-size: 1.7cqw; }
+
+#timeLeft { font-variant-numeric: tabular-nums; font-weight: 500; }
+button.pill {
+  font: inherit; font-weight: 700; border: 0; border-radius: 999px; cursor: pointer;
+  padding: .65em 1.2em; color: #fff; background: var(--danger);
+}
+.live-title { display: none; }
+
+body[data-layout="vertical"] #liveHud {
+  position: absolute; top: 1.6cqh; right: 3cqw; z-index: 3; display: flex; gap: 2cqw; align-items: center;
+}
+body[data-layout="vertical"] #timeLeft { padding: .5em .9em; border-radius: 999px; background: var(--panel); font-size: 2.6cqw; }
+body[data-layout="vertical"] #endBtn { font-size: 2.6cqw; }
+
+body[data-layout="horizontal"] #liveHud { display: flex; flex-direction: column; }
+body[data-layout="horizontal"] .live-title { display: block; font-size: 2.2cqw; font-weight: 700; }
+body[data-layout="horizontal"] .live-title small { display: block; font-size: 1.2cqw; font-weight: 400; color: var(--ink-dim); margin-top: .3em; }
+body[data-layout="horizontal"] #timeLeft { display: block; margin-top: 3cqh; font-size: 5cqw; color: var(--accent); line-height: 1; }
+body[data-layout="horizontal"] #endBtn { margin-top: 4cqh; font-size: 1.5cqw; align-self: flex-start; }
+
+/* ---------- THANKS ---------- */
+#thanks { background: radial-gradient(120% 80% at 50% 40%, var(--bg-2), var(--bg)); text-align: center; }
+#thanks.on { display: flex; align-items: center; justify-content: center; padding: 24px; }
+#thanks h2 { font-size: 7cqmin; }
+#thanks p  { margin-top: .5em; font-size: 3.4cqmin; color: var(--ink-dim); }
+
+/* ---------- SETUP (plain page, not scaled to the stage) ---------- */
+#setup {
+  position: fixed; inset: 0; z-index: 20; background: var(--bg); overflow-y: auto; padding: 24px 16px;
+  -webkit-user-select: text; user-select: text;
+}
+#setup .card { max-width: 680px; margin: 0 auto; }
+#setup h2 { font-size: 24px; margin-bottom: 6px; }
+#setup .sub { color: var(--ink-dim); margin-bottom: 8px; line-height: 1.55; font-size: 15px; }
+#setup label { display: block; font-weight: 500; margin: 18px 0 6px; font-size: 15px; }
+#setup .hint { color: var(--ink-dim); font-size: 13px; margin-top: 4px; line-height: 1.45; }
+#setup textarea, #setup input, #setup select {
+  width: 100%; font: inherit; font-size: 15px; color: var(--ink);
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+}
+#setup textarea { min-height: 100px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+#setup .row { display: flex; gap: 12px; flex-wrap: wrap; }
+#setup .row > div { flex: 1 1 180px; }
+#setup .seg { display: flex; gap: 8px; flex-wrap: wrap; }
+#setup .seg button {
+  flex: 1 1 200px; text-align: left; font: inherit; color: var(--ink); cursor: pointer;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+}
+#setup .seg button b { display: block; font-size: 15px; }
+#setup .seg button span { font-size: 13px; color: var(--ink-dim); }
+#setup .seg button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+#setup .actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+#setup .actions button { background: var(--accent); color: #1b1300; font-size: 15px; }
+#setup .actions button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+#setupErr { color: #ff8a80; margin-top: 12px; min-height: 1.2em; font-size: 14px; }
+code { background: var(--bg-2); padding: 1px 6px; border-radius: 6px; font-size: .92em; }
+
+/* ---------- DEBUG LOG ---------- */
+#debug {
+  position: fixed; left: 8px; bottom: 8px; width: min(520px, calc(100% - 16px)); max-height: 38vh;
+  overflow: auto; z-index: 50; display: none;
+  background: rgba(0,0,0,.85); color: #9fe39f; border-radius: 8px; padding: 8px 10px;
+  font: 12px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-all;
+  -webkit-user-select: text; user-select: text;
+}
+#debug.on { display: block; }
+</style>
+</head>
+<body data-layout="vertical">
+
+<div id="stage">
+
+  <!-- IDLE: free looping video, no LiveAvatar session -->
+  <section id="idle" class="screen" aria-label="Chạm để bắt đầu">
+    <div class="avatar-area">
+      <video id="idleVideo" muted loop playsinline autoplay preload="auto" hidden></video>
+      <div id="idleFallback">
+        <div class="pulse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="brand">Học viện Ngoại giao · Diplomatic Academy of Vietnam</div>
+    <div class="side">
+      <div class="prompt">
+        <h1>Xin chào! Mình có thể giúp gì cho bạn?</h1>
+        <p class="en">Hello! How can I help you today?</p>
+        <span class="tap-hint">Chạm để trò chuyện · Tap to talk</span>
+        <div class="suggest">
+          <h3>Bạn có thể hỏi · Try asking</h3>
+          <ul class="suggestList"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE: LiveAvatar iframe.
+       .waiting = the embed's own pre-start screen ("Chat now"), used as the idle screen in one-tap mode
+       .talking = the visitor pressed Chat now; credits are being used -->
+  <section id="live" class="screen" aria-label="Trò chuyện với trợ lý">
+    <div class="avatar-area"><div id="frameHost"></div></div>
+    <div class="brand live-brand"><span>Học viện Ngoại giao · Diplomatic Academy of Vietnam</span></div>
+    <div id="bar"></div>
+    <div id="warnToast">Còn 30 giây nữa · 30 seconds left</div>
+    <div id="startHint">Nhấn <b>“Chat now”</b> để trò chuyện<small>Tap “Chat now” to talk</small></div>
+    <div class="side" id="liveSide">
+      <div id="liveHud">
+        <div class="live-title when-waiting">Xin chào! Mình có thể giúp gì cho bạn?<small>Hello! Tap “Chat now” and just speak.</small></div>
+        <div class="live-title when-talking">Đang trò chuyện<small>Live conversation · nói tự nhiên, mình đang nghe</small></div>
+        <span id="timeLeft">3:00</span>
+        <div class="suggest">
+          <h3>Gợi ý câu hỏi · Try asking</h3>
+          <ul class="suggestList"></ul>
+        </div>
+        <button class="pill" id="endBtn" type="button">Kết thúc · End</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- THANKS -->
+  <section id="thanks" class="screen">
+    <div>
+      <h2>Cảm ơn bạn!</h2>
+      <p>Thank you — see you again soon.</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- SETUP -->
+<section id="setup" class="screen">
+  <div class="card">
+    <h2>Kiosk setup</h2>
+    <p class="sub">
+      Paste the <b>Embed</b> snippet from app.liveavatar.com (Avatar → Embed → copy the HTML).
+      <b>No API key goes here</b>: the embed carries its own access.
+      Settings are saved on this device, separately for each layout.
+      Reopen this screen with <code>Shift + S</code> or <code>?setup</code> in the URL.
+    </p>
+
+    <label>Layout</label>
+    <div class="seg" id="layoutSeg">
+      <button type="button" data-layout="vertical"><b>Vertical · full body</b><span>Portrait 9:16 screen, avatar fills it head to toe</span></button>
+      <button type="button" data-layout="horizontal"><b>Horizontal · half body</b><span>Landscape 16:9 screen, avatar left, info panel right</span></button>
+    </div>
+    <div class="hint" id="layoutHint"></div>
+
+    <label for="embedIn">LiveAvatar embed snippet or URL (for this layout)</label>
+    <textarea id="embedIn" spellcheck="false" placeholder='<iframe src="https://..." ...></iframe>'></textarea>
+
+    <div class="row">
+      <div>
+        <label for="secIn">Session length (seconds)</label>
+        <input id="secIn" type="number" min="30" max="3600" step="10">
+        <div class="hint">Keep this at or below the time limit set in the LiveAvatar Embed modal.</div>
+      </div>
+      <div>
+        <label for="zoomIn">Avatar zoom</label>
+        <input id="zoomIn" type="number" min="1" max="3" step="0.05">
+        <div class="hint">1 = as LiveAvatar sends it. Above 1 crops from the top down once the chat starts, e.g. 2 turns a full-body feed into half body.</div>
+      </div>
+    </div>
+
+    <label for="orientIn">LiveAvatar feed orientation</label>
+    <select id="orientIn">
+      <option value="match">Match the layout</option>
+      <option value="vertical">Vertical (tall feed: full-body avatars)</option>
+      <option value="horizontal">Horizontal (wide feed)</option>
+    </select>
+    <div class="hint">For a full-body avatar on the horizontal layout, choose Vertical and set zoom to about 2.</div>
+
+    <label for="startIn">How visitors start</label>
+    <select id="startIn">
+      <option value="one-tap">One tap: the avatar waits on screen, visitors tap “Chat now”</option>
+      <option value="two-tap">Two taps: our idle screen / video first, then “Chat now”</option>
+    </select>
+    <div class="hint">One tap is simpler for visitors. Two taps lets you show your own idle video.</div>
+
+    <label for="vidIn">Idle video (optional)</label>
+    <input id="vidIn" type="text" placeholder="idle-vertical.mp4">
+    <div class="hint">A file next to this page, or a URL. Leave empty for the animated screen.</div>
+
+    <div id="setupErr"></div>
+    <div class="actions">
+      <button class="pill" id="saveBtn" type="button">Save &amp; start kiosk</button>
+      <button class="pill ghost" id="testBtn" type="button">Save &amp; start a session now</button>
+      <button class="pill ghost" id="debugBtn" type="button">Toggle debug log</button>
+    </div>
+  </div>
+</section>
+
+<pre id="debug"></pre>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------------- CONFIG ---------------- */
+  const CONFIG = {
+    defaultLayout: 'vertical',
+    warnSeconds: 30,        // "30 seconds left" toast
+    thanksSeconds: 4,       // thank-you screen before returning to idle
+    prestartSeconds: 45,    // two-tap mode: back to our idle screen if nobody presses "Chat now" in time
+    idleRefreshMinutes: 15, // one-tap mode: reload the waiting embed this often so its start screen never goes stale
+    autoOrientation: true,  // set ?orientation= on liveavatar.com embeds from each layout's "orientation" setting
+    // Shown in the horizontal layout's side panel. Replace with real DAV questions.
+    suggestions: [
+      'Phòng Đào tạo ở đâu?',
+      'Thư viện mở cửa lúc mấy giờ?',
+      'Làm sao để tham gia câu lạc bộ?',
+      'Where is the international office?',
+    ],
+    // Per-layout defaults; the setup panel overrides these on each device.
+    // orientation: 'match' = same as the layout; 'vertical' = tall feed; 'horizontal' = wide feed.
+    // A tall full-body avatar on the horizontal layout looks best as orientation 'vertical' + zoom ≈ 2.
+    // startMode: 'one-tap' = LiveAvatar's own start screen is the idle screen, visitors tap "Chat now" once;
+    //            'two-tap' = our own idle screen/video first, then "Chat now".
+    layouts: {
+      vertical:   { embedUrl: '', sessionSeconds: 180, idleVideo: '', zoom: 1, orientation: 'match', startMode: 'one-tap' },
+      horizontal: { embedUrl: '', sessionSeconds: 180, idleVideo: '', zoom: 1, orientation: 'match', startMode: 'one-tap' },
+    },
+    // If the debug log shows LiveAvatar posting a clear "session ended" message while testing,
+    // put a regex for it here so the wrapper returns to idle immediately, e.g. /session[_ ]?end/i
+    endOnMessage: null,
+  };
+  const STORE_KEY = 'dav-avatar-kiosk:v2';
+  const LAYOUTS = ['vertical', 'horizontal'];
+  const ORIENTS = ['match', 'vertical', 'horizontal'];
+  const START_MODES = ['one-tap', 'two-tap'];
+  const LAYOUT_HINT = {
+    vertical:   'Pick a full-body avatar in LiveAvatar for this one; the wrapper cannot add the legs back to a half-body avatar.',
+    horizontal: 'Use a half-body avatar, or a full-body one with zoom around 1.5–1.8.',
+  };
+
+  /* ---------------- helpers ---------------- */
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const dbg = $('debug');
+  function log(...a) {
+    const line = `[${new Date().toLocaleTimeString()}] ` + a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ');
+    console.log('[kiosk]', ...a);
+    dbg.textContent += line + '\n';
+    dbg.scrollTop = dbg.scrollHeight;
+  }
+  function loadStore() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { return {}; } }
+  function saveStore(obj) { try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch { log('localStorage unavailable; settings kept for this page load only'); } }
+
+  // Accept a full <iframe ...> snippet or a bare URL; return the https src or ''.
+  function extractSrc(text) {
+    const t = (text || '').trim();
+    if (!t) return '';
+    const m = t.match(/src\s*=\s*["']([^"']+)["']/i);
+    const url = (m ? m[1] : t).replace(/&amp;/g, '&');
+    try {
+      const u = new URL(url, location.href);
+      const local = ['localhost', '127.0.0.1'].includes(u.hostname);   // allows the mock page for dry runs
+      return (u.protocol === 'https:' || (local && u.protocol === 'http:')) ? u.href : '';
+    } catch { return ''; }
+  }
+  const clampNum = (v, lo, hi, d) => { v = +v; return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+
+  /* ---------------- settings: CONFIG < saved < URL params ---------------- */
+  const store = loadStore();   // { lastLayout, vertical:{...}, horizontal:{...} }
+  let layout = LAYOUTS.includes(params.get('layout')) ? params.get('layout')
+             : LAYOUTS.includes(store.lastLayout) ? store.lastLayout : CONFIG.defaultLayout;
+
+  function settingsFor(l) {
+    const base = { ...CONFIG.layouts[l], ...(store[l] || {}) };
+    if (l === layout) {   // URL params only apply to the layout being shown
+      if (params.get('embed')) base.embedUrl = extractSrc(params.get('embed')) || base.embedUrl;
+      if (params.get('seconds')) base.sessionSeconds = clampNum(params.get('seconds'), 30, 3600, base.sessionSeconds);
+      if (params.has('video')) base.idleVideo = params.get('video');
+      if (params.get('zoom')) base.zoom = clampNum(params.get('zoom'), 1, 3, base.zoom);
+      if (ORIENTS.includes(params.get('orientation'))) base.orientation = params.get('orientation');
+      if (START_MODES.includes(params.get('start'))) base.startMode = params.get('start');
+    }
+    return base;
+  }
+  let S = settingsFor(layout);
+
+  const isOneTap = () => S.startMode !== 'two-tap';
+  const feedOrientation = () => (ORIENTS.includes(S.orientation) && S.orientation !== 'match') ? S.orientation : layout;
+
+  function applyLayout() {
+    document.body.dataset.layout = layout;
+    document.body.classList.toggle('one-tap', isOneTap());
+    document.body.classList.toggle('feed-tall', feedOrientation() === 'vertical');
+    document.documentElement.style.setProperty('--zoom', S.zoom);
+    setupIdleVideo();
+    log('layout', layout, { start: isOneTap() ? 'one-tap' : 'two-tap', sessionSeconds: S.sessionSeconds, zoom: S.zoom, orientation: S.orientation || 'match', idleVideo: S.idleVideo || '(none)', embed: S.embedUrl ? 'set' : 'missing' });
+  }
+
+  if (params.has('debug')) dbg.classList.add('on');
+  if (params.has('fill')) document.body.classList.add('fill');
+  document.querySelectorAll('.suggestList').forEach(ul => {
+    CONFIG.suggestions.forEach(q => { const li = document.createElement('li'); li.textContent = q; ul.appendChild(li); });
+  });
+
+  /* ---------------- state machine ---------------- */
+  const screens = ['setup', 'idle', 'live', 'thanks'];
+  // phase inside 'live': 'waiting' (embed's own Chat-now screen, no countdown yet) → 'talking'
+  let state = null, phase = null, tickTimer = null, thanksTimer = null, endsAt = 0, refreshAt = 0, warned = false;
+
+  function show(name) {
+    screens.forEach(s => $(s).classList.toggle('on', s === name));
+    state = name;
+    log('state →', name);
+  }
+
+  // Idle: in one-tap mode that is LiveAvatar's own start screen ("Chat now"); in two-tap mode our idle screen.
+  function goIdle() {
+    clearTimeout(thanksTimer);
+    if (isOneTap() && S.embedUrl) { openEmbed(false); return; }
+    unmountFrame();
+    show('idle');
+    const v = $('idleVideo');
+    if (!v.hidden) v.play().catch(() => {});
+  }
+
+  // Two-tap mode: a tap on our idle screen opens the embed's start screen.
+  function startSession() {
+    if (state === 'live') return;
+    if (!S.embedUrl) { openSetup('Paste the embed snippet for the ' + layout + ' layout first.'); return; }
+    $('idleVideo').pause();
+    openEmbed(true);
+  }
+
+  // Mount the embed on its start screen and wait for the visitor's tap on "Chat now".
+  function openEmbed(withTimeout) {
+    clearInterval(tickTimer);
+    window.focus();                 // so a later tap inside the iframe fires window 'blur'
+    mountFrame();
+    phase = 'waiting';
+    $('live').classList.remove('talking');
+    endsAt = withTimeout ? Date.now() + CONFIG.prestartSeconds * 1000 : Infinity;
+    refreshAt = Date.now() + CONFIG.idleRefreshMinutes * 60000;
+    warned = false;
+    $('bar').classList.remove('warn');
+    $('warnToast').classList.remove('show');
+    $('startHint').classList.add('show');
+    show('live');
+    tick();
+    tickTimer = setInterval(tick, 250);
+    requestWakeLock();
+  }
+
+  // The visitor tapped inside the avatar (normally "Chat now"): start the real countdown.
+  function beginTalking(reason) {
+    if (state !== 'live' || phase !== 'waiting') return;
+    phase = 'talking';
+    endsAt = Date.now() + S.sessionSeconds * 1000;
+    $('startHint').classList.remove('show');
+    $('live').classList.add('talking');
+    log('talking:', reason);
+  }
+  // Clicks inside a cross-origin iframe can't be seen directly, but they move focus into it.
+  window.addEventListener('blur', () => setTimeout(() => {
+    if (state === 'live' && document.activeElement && document.activeElement.tagName === 'IFRAME') beginTalking('tap inside avatar');
+  }, 0));
+
+  function endSession(reason, skipThanks) {
+    if (state !== 'live') return;
+    log('session end:', reason);
+    clearInterval(tickTimer);
+    phase = null;
+    $('startHint').classList.remove('show');
+    $('live').classList.remove('talking');
+    unmountFrame();                 // removing the iframe disconnects the stream → stops credits
+    if (skipThanks) { goIdle(); return; }
+    show('thanks');
+    thanksTimer = setTimeout(goIdle, CONFIG.thanksSeconds * 1000);
+  }
+
+  function tick() {
+    if (phase === 'waiting') {
+      const s = S.sessionSeconds;
+      $('timeLeft').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      $('bar').style.transform = 'scaleX(1)';
+      if (Date.now() >= endsAt) endSession('nobody pressed Chat now', true);
+      else if (isOneTap() && Date.now() >= refreshAt) {
+        log('refreshing the waiting embed');
+        mountFrame();
+        window.focus();
+        refreshAt = Date.now() + CONFIG.idleRefreshMinutes * 60000;
+      }
+      return;
+    }
+    const left = Math.max(0, endsAt - Date.now());
+    const secs = Math.ceil(left / 1000);
+    $('timeLeft').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+    $('bar').style.transform = `scaleX(${left / (S.sessionSeconds * 1000)})`;
+    if (!warned && secs <= CONFIG.warnSeconds && S.sessionSeconds > CONFIG.warnSeconds) {
+      warned = true;
+      $('bar').classList.add('warn');
+      $('warnToast').classList.add('show');
+      setTimeout(() => $('warnToast').classList.remove('show'), 4000);
+    }
+    if (left <= 0) endSession('time limit');
+  }
+
+  /* ---------------- iframe ---------------- */
+  function embedSrc() {
+    let src = S.embedUrl;
+    try {
+      const u = new URL(src);
+      if (CONFIG.autoOrientation && /(^|\.)liveavatar\.com$/.test(u.hostname)) {
+        u.searchParams.set('orientation', ORIENTS.includes(S.orientation) && S.orientation !== 'match' ? S.orientation : layout);
+        src = u.href;
+      }
+    } catch {}
+    return src;
+  }
+  function mountFrame() {
+    unmountFrame();
+    const f = document.createElement('iframe');
+    f.src = embedSrc();
+    f.allow = 'microphone; camera; autoplay; fullscreen; display-capture';
+    f.setAttribute('allowfullscreen', '');
+    f.title = 'LiveAvatar';
+    f.addEventListener('load', () => log('iframe loaded'));
+    $('frameHost').appendChild(f);
+    log('iframe mounted', f.src);
+  }
+  function unmountFrame() {
+    const f = $('frameHost').querySelector('iframe');
+    if (f) { f.src = 'about:blank'; f.remove(); log('iframe removed'); }
+  }
+
+  // Log anything LiveAvatar posts to the parent, so we can learn its events while testing.
+  window.addEventListener('message', (e) => {
+    if (state !== 'live') return;
+    let embedOrigin = '';
+    try { embedOrigin = new URL(S.embedUrl).origin; } catch {}
+    log('postMessage from', e.origin, e.data);
+    if (CONFIG.endOnMessage && e.origin === embedOrigin) {
+      const text = typeof e.data === 'string' ? e.data : JSON.stringify(e.data);
+      if (CONFIG.endOnMessage.test(text)) endSession('iframe said: ' + text.slice(0, 80));
+    }
+  });
+
+  /* ---------------- idle video ---------------- */
+  function setupIdleVideo() {
+    const v = $('idleVideo'), fb = $('idleFallback');
+    v.onerror = v.oncanplay = null;
+    if (!S.idleVideo) { v.hidden = true; fb.hidden = false; v.removeAttribute('src'); v.load(); return; }
+    v.onerror = () => { log('idle video failed to load:', S.idleVideo); v.hidden = true; fb.hidden = false; };
+    v.oncanplay = () => { v.hidden = false; fb.hidden = true; };
+    v.src = S.idleVideo;
+    v.load();
+  }
+
+  /* ---------------- setup panel ---------------- */
+  let setupLayout = layout;
+  function fillSetup(l) {
+    setupLayout = l;
+    const s = settingsFor(l);
+    document.querySelectorAll('#layoutSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === l)));
+    $('layoutHint').textContent = LAYOUT_HINT[l];
+    $('embedIn').value = s.embedUrl;
+    $('secIn').value = s.sessionSeconds;
+    $('zoomIn').value = s.zoom;
+    $('orientIn').value = ORIENTS.includes(s.orientation) ? s.orientation : 'match';
+    $('startIn').value = START_MODES.includes(s.startMode) ? s.startMode : 'one-tap';
+    $('vidIn').value = s.idleVideo;
+    $('vidIn').placeholder = `idle-${l}.mp4`;
+  }
+  function openSetup(msg) {
+    if (state === 'live') endSession('opened setup');
+    clearTimeout(thanksTimer);
+    fillSetup(layout);
+    $('setupErr').textContent = msg || '';
+    show('setup');
+  }
+  document.querySelectorAll('#layoutSeg button').forEach(b => b.addEventListener('click', () => { fillSetup(b.dataset.layout); $('setupErr').textContent = ''; }));
+
+  function applySetup() {
+    const url = extractSrc($('embedIn').value);
+    if (!url) { $('setupErr').textContent = 'Could not find an https:// src in what you pasted.'; return false; }
+    const secs = Math.round(+$('secIn').value);
+    if (!(secs >= 30 && secs <= 3600)) { $('setupErr').textContent = 'Session length must be 30–3600 seconds.'; return false; }
+    const zoom = +$('zoomIn').value;
+    if (!(zoom >= 1 && zoom <= 3)) { $('setupErr').textContent = 'Zoom must be between 1 and 3.'; return false; }
+    store[setupLayout] = { embedUrl: url, sessionSeconds: secs, zoom, orientation: $('orientIn').value, startMode: $('startIn').value, idleVideo: $('vidIn').value.trim() };
+    store.lastLayout = setupLayout;
+    saveStore(store);
+    layout = setupLayout;
+    S = { ...store[layout] };
+    applyLayout();
+    return true;
+  }
+  $('saveBtn').onclick = () => { if (applySetup()) goIdle(); };
+  $('testBtn').onclick = () => { if (!applySetup()) return; if (isOneTap()) goIdle(); else { show('idle'); startSession(); } };
+  $('debugBtn').onclick = () => dbg.classList.toggle('on');
+
+  /* ---------------- inputs ---------------- */
+  $('idle').addEventListener('pointerup', startSession);
+  $('endBtn').addEventListener('click', () => endSession('end button'));
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea, select')) return;
+    const k = e.key.toLowerCase();
+    if (e.shiftKey && k === 's') openSetup();
+    else if (e.shiftKey && k === 'd') dbg.classList.toggle('on');
+    else if ((e.key === ' ' || e.key === 'Enter') && state === 'idle') startSession();
+    else if (e.key === 'Escape' && state === 'live' && (phase === 'talking' || !isOneTap())) endSession('escape key');
+  });
+
+  // Hide the cursor after 3s without mouse movement (touch kiosks).
+  let cursorTimer;
+  document.addEventListener('pointermove', () => {
+    document.body.classList.remove('hide-cursor');
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(() => document.body.classList.add('hide-cursor'), 3000);
+  });
+
+  // Keep the screen awake while the page is open.
+  let wakeLock = null, wakeLockWarned = false;
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator && !wakeLock && document.visibilityState === 'visible') {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (err) {
+      if (!wakeLockWarned) { wakeLockWarned = true; log('wake lock unavailable (fine in a preview; set the OS to never sleep on the kiosk):', String(err)); }
+    }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWakeLock(); });
+
+  /* ---------------- boot ---------------- */
+  applyLayout();
+  if (!S.embedUrl || params.has('setup')) openSetup();
+  else goIdle();
+  requestWakeLock();
+})();
+</script>
+</body>
+</html>

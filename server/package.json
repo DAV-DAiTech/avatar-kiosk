@@ -1,0 +1,7 @@
+{
+  "name": "dav-avatar-kiosk-api",
+  "private": true,
+  "type": "module",
+  "description": "Token server for the DAV avatar kiosk: keeps the LiveAvatar API key off the public page.",
+  "engines": { "node": ">=20" }
+}

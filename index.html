@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DAV Avatar Kiosk</title>
+<title>DAV Receptionist</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/avatar-idle.jpg">
+<link rel="modulepreload" href="vendor/liveavatar-web-sdk-0.0.20.min.js">
 <style>
 /* ================================================================
-   DAV Avatar Kiosk — wrapper around the LiveAvatar iframe embed.
+   DAV avatar kiosk — push-to-talk LiveAvatar session, no iframe.
 
-   Two layouts (pick with ?layout=vertical or ?layout=horizontal,
-   or in the setup panel — Shift+S):
-     vertical   — 9:16 portrait screen, full-body avatar fills it
-     horizontal — 16:9 landscape screen, half-body avatar on the left,
-                  info / suggested-questions panel on the right
+   idle (photo of the avatar, free)  → tap the button → connecting → live
+   live: hold the button to talk, release to send (or tap, talk, tap)
+   ends at the time limit, on "Kết thúc", or when nobody talks for a
+   while → thank-you → idle.   Credits are used only while live.
 
-   States:  setup → idle → live → thanks → idle …
-   Credits are used ONLY while the iframe is mounted (live state).
+   Setup: first visit, ?setup, Shift+S, or hold the top-left corner 3 s.
    ================================================================ */
 :root {
   --bg: #0b1730;
@@ -27,25 +27,24 @@
   --ink-dim: #a9b4cc;
   --line: #2a3d66;
   --accent: #e2b44b;
-  --danger: #d9534f;
-  --panel: rgba(11, 23, 48, .78);
-  --zoom: 1;
+  --accent-ink: #1a1405;
+  --listen: #e5484d;
+  --ok: #3ecf8e;
 }
-body[data-layout="vertical"]   { --arw: 9;  --arh: 16; --avatar-w: 100%; }
-body[data-layout="horizontal"] { --arw: 16; --arh: 9;  --avatar-w: 62%;  }
+body[data-layout="vertical"]   { --arw: 9;  --arh: 16; }
+body[data-layout="horizontal"] { --arw: 16; --arh: 9;  }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%; overflow: hidden; background: #000; color: var(--ink);
   font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-user-select: none; user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
 }
 body { display: flex; align-items: center; justify-content: center; }
 body.hide-cursor, body.hide-cursor * { cursor: none !important; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
-/* The stage keeps the target screen's aspect ratio, so a laptop preview
-   looks like the real kiosk. Add ?fill to stretch to any screen instead. */
 #stage {
   position: relative; overflow: hidden; background: var(--bg);
   width:  min(100vw, calc(100vh * var(--arw) / var(--arh)));
@@ -54,658 +53,787 @@ body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 }
 body.fill #stage { width: 100vw; height: 100vh; }
 
-.screen { position: absolute; inset: 0; display: none; }
-.screen.on { display: block; }
+/* ---------- avatar: full stage (vertical) or left 56% (horizontal, half body) ---------- */
+#avatar { position: absolute; inset: 0; overflow: hidden; background: #0d1a33; }
+body[data-layout="horizontal"] #avatar { right: auto; width: 56cqw; }
+#avatar img, #avatar video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: 50% 0%;
+  transition: opacity .6s ease;
+}
+#still { animation: breathe 9s ease-in-out infinite alternate; transform-origin: 50% 30%; }
+@keyframes breathe { from { transform: scale(1); } to { transform: scale(1.025); } }
+#video { opacity: 0; background: transparent; }
+body.video-on #video { opacity: 1; }
+body.video-on #still { opacity: 0; }
+/* soft fade so text over the avatar stays readable */
+.shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(11,23,48,.55) 0, rgba(11,23,48,0) 16%, rgba(11,23,48,0) 52%, rgba(11,23,48,.92) 100%); }
+body[data-layout="horizontal"] .shade {
+  background: linear-gradient(to bottom, rgba(11,23,48,0) 40%, rgba(11,23,48,.92) 100%),
+              linear-gradient(to right, rgba(11,23,48,0) 80%, var(--bg) 100%); }
 
-/* ---------- avatar area (full stage in vertical, left 62% in horizontal) ---------- */
-.avatar-area {
-  position: absolute; top: 0; bottom: 0; left: 0; width: var(--avatar-w); overflow: hidden;
-  background: radial-gradient(120% 80% at 50% 30%, var(--bg-2), var(--bg));
-}
+/* ---------- brand ---------- */
+.brand { position: absolute; display: flex; align-items: center; gap: 1.6cqmin; z-index: 3; }
+body[data-layout="vertical"]   .brand { top: 3cqh; left: 5cqw; }
+body[data-layout="horizontal"] .brand { top: 5cqh; left: calc(56cqw + 3.5cqw); }
+.brand-mark { width: 7.5cqmin; height: 7.5cqmin; border-radius: 1.8cqmin; display: grid; place-items: center;
+  background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 2.5cqmin; letter-spacing: .02em; }
+.brand-t1 { font-weight: 700; font-size: 3cqmin; line-height: 1.15; }
+.brand-t2 { color: var(--ink-dim); font-size: 2.2cqmin; margin-top: .3cqmin; }
 
-/* ---------- IDLE ---------- */
-#idle { cursor: pointer; }
-#idleVideo { position: absolute; inset: 0; width: 100%; height: 100%; }
-body[data-layout="vertical"]   #idleVideo { object-fit: contain; object-position: 50% 100%; } /* never crop the feet */
-body[data-layout="horizontal"] #idleVideo { object-fit: cover;   object-position: 50% 0%;   } /* keep the head in frame */
-#idleFallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-.pulse {
-  width: 42cqmin; aspect-ratio: 1; border-radius: 50%;
-  background: radial-gradient(circle, rgba(226,180,75,.35), rgba(226,180,75,0) 70%);
-  display: flex; align-items: center; justify-content: center;
-  animation: breathe 3.2s ease-in-out infinite;
-}
-.pulse svg { width: 38%; height: 38%; color: var(--accent); }
-@keyframes breathe { 0%,100% { transform: scale(.92); opacity: .75 } 50% { transform: scale(1.04); opacity: 1 } }
+/* ---------- timer pill (live only) ---------- */
+.timer { position: absolute; top: 3cqh; right: 5cqw; z-index: 3; display: none;
+  padding: 1cqmin 2.2cqmin; border-radius: 99px; font-weight: 700; font-size: 3cqmin; font-variant-numeric: tabular-nums;
+  background: rgba(11,23,48,.72); border: 1px solid var(--line); backdrop-filter: blur(6px); }
+body[data-layout="horizontal"] .timer { top: 5cqh; right: 3.5cqw; }
+body.st-live .timer { display: block; }
+.timer.low { color: #ffd27a; border-color: #8a6a1f; }
+.bar { position: absolute; left: 0; top: 0; height: .5cqmin; background: var(--accent); z-index: 4; width: 0; display: none;
+  transition: width .25s linear; }
+body.st-live .bar { display: block; }
 
-.brand {
-  position: absolute; top: 2.2cqh; text-align: center; z-index: 2;
-  font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim);
-}
-body[data-layout="vertical"]   .brand { left: 0; right: 0; font-size: 2.2cqw; }
-body[data-layout="horizontal"] .brand { left: 62%; right: 0; padding: 0 3cqw; font-size: 1.15cqw; top: 5cqh; }
+/* ---------- side panel (horizontal) ---------- */
+.side { display: none; }
+body[data-layout="horizontal"] .side {
+  display: flex; flex-direction: column; position: absolute; top: 0; bottom: 0; left: 56cqw; right: 0;
+  padding: 17cqh 3.5cqw 0; background: var(--bg); z-index: 2; }
+.side h1 { font-size: 4.6cqh; line-height: 1.15; font-weight: 700; }
+.side .intro { color: var(--ink-dim); font-size: 2.5cqh; line-height: 1.45; margin-top: 1.6cqh; max-width: 60ch; }
+.steps { list-style: none; margin-top: 3cqh; display: grid; gap: 1.4cqh; }
+.steps li { display: flex; gap: 1.4cqw; align-items: center; font-size: 2.4cqh; }
+.steps b { flex: none; width: 4.4cqh; height: 4.4cqh; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--accent); color: var(--accent); font-size: 2.2cqh; }
+.suggest { margin-top: 3.4cqh; }
+.suggest h3 { font-size: 2cqh; color: var(--ink-dim); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; }
+.chips { display: flex; flex-wrap: wrap; gap: 1.2cqh; margin-top: 1.4cqh; }
+.chip { padding: 1.3cqh 1.8cqh; border-radius: 99px; border: 1px solid var(--line); background: var(--bg-2);
+  font-size: 2.2cqh; text-align: left; line-height: 1.3; transition: background .2s, border-color .2s; }
+.chip:active { background: #1d3363; border-color: var(--accent); }
+body:not(.st-live) .chip { opacity: .55; }
 
-/* prompt: bottom overlay (vertical) / right-hand panel (horizontal) */
-.prompt h1 { font-weight: 700; letter-spacing: -.01em; line-height: 1.15; }
-.prompt .en { color: var(--ink-dim); margin-top: .4em; }
-.tap-hint {
-  display: inline-block; margin-top: 1.4em; padding: .7em 1.6em; border-radius: 999px;
-  background: var(--accent); color: #1b1300; font-weight: 700;
-  animation: nudge 2.4s ease-in-out infinite;
-}
-@keyframes nudge { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+/* ---------- captions ---------- */
+#captions { position: absolute; z-index: 3; display: flex; flex-direction: column; justify-content: flex-end; gap: 1cqmin;
+  overflow: hidden; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%); mask-image: linear-gradient(to bottom, transparent 0, #000 22%); }
+body[data-layout="vertical"]   #captions { left: 6cqw; right: 6cqw; bottom: 34cqh; max-height: 19cqh; }
+body[data-layout="horizontal"] #captions { left: 4cqw; width: 48cqw; bottom: 38cqh; max-height: 24cqh; }
+#captions p { text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+#capUser { color: var(--ink-dim); font-size: 3cqmin; font-style: italic; }
+#capAvatar { font-size: 3.6cqmin; line-height: 1.4; font-weight: 500; }
+#capUser:empty, #capAvatar:empty { display: none; }
 
-body[data-layout="vertical"] .prompt {
-  position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
-  padding: 8cqh 6cqw 6cqh;
-  background: linear-gradient(to top, rgba(11,23,48,.94) 45%, rgba(11,23,48,0));
-}
-body[data-layout="vertical"] .prompt h1 { font-size: 6.4cqw; }
-body[data-layout="vertical"] .prompt .en { font-size: 3.4cqw; }
-body[data-layout="vertical"] .tap-hint { font-size: 3.6cqw; }
+/* ---------- dock: push-to-talk + end ---------- */
+.dock { position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
+body[data-layout="vertical"]   .dock { left: 0; right: 0; bottom: 5cqh; }
+body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 5cqh; }
+.ptt-row { position: relative; display: flex; align-items: center; justify-content: center; }
+#ptt { position: relative; width: var(--ptt); height: var(--ptt); border-radius: 50%; touch-action: none;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-ink);
+  box-shadow: 0 1cqmin 4cqmin rgba(0,0,0,.45), inset 0 -.8cqmin 0 rgba(0,0,0,.12);
+  transition: transform .12s ease, background .2s ease; }
+body[data-layout="vertical"]   #ptt { --ptt: 21cqw; }
+body[data-layout="horizontal"] #ptt { --ptt: 19cqh; }
+#ptt svg { width: 42%; height: 42%; }
+#ptt:active { transform: scale(.96); }
+#ptt .ring, #ptt .ring2 { position: absolute; inset: -1.4cqmin; border-radius: 50%; border: .5cqmin solid var(--accent);
+  opacity: 0; pointer-events: none; }
+body.st-idle #ptt .ring { animation: pulse 2.4s ease-out infinite; }
+body.listening #ptt { background: var(--listen); color: #fff; transform: scale(1.06); }
+body.listening #ptt .ring, body.listening #ptt .ring2 { border-color: var(--listen); animation: pulse 1.1s ease-out infinite; }
+body.listening #ptt .ring2 { animation-delay: .55s; }
+@keyframes pulse { 0% { opacity: .9; transform: scale(.95); } 100% { opacity: 0; transform: scale(1.45); } }
+body.st-connecting #ptt, body.st-ending #ptt { background: var(--bg-2); color: var(--ink-dim); }
+body.st-connecting #ptt .ring { opacity: 1; border-color: var(--accent) transparent transparent transparent; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+body.speaking:not(.listening) #ptt { background: #f0cf7d; }
+.ptt-label { font-weight: 700; font-size: 3.4cqmin; text-align: center; text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+.ptt-sub { color: var(--ink-dim); font-size: 2.4cqmin; text-align: center; margin-top: -1cqmin; min-height: 1.4em; }
+#endBtn { position: absolute; left: calc(50% + var(--ptt-half) + 4cqmin); padding: 1.4cqmin 2.6cqmin; border-radius: 99px;
+  border: 1px solid var(--line); background: rgba(11,23,48,.75); font-size: 2.6cqmin; font-weight: 600; display: none; white-space: nowrap; }
+body[data-layout="vertical"]   #endBtn { --ptt-half: 10.5cqw; }
+body[data-layout="horizontal"] #endBtn { --ptt-half: 9.5cqh; }
+body.st-live #endBtn { display: block; }
 
-.side {
-  position: absolute; top: 0; bottom: 0; right: 0; width: calc(100% - var(--avatar-w));
-  background: linear-gradient(160deg, var(--bg-2), var(--bg));
-  border-left: 1px solid var(--line);
-  display: flex; flex-direction: column; justify-content: center; padding: 10cqh 3.2cqw 6cqh;
-}
-body[data-layout="vertical"] .side { display: contents; } /* in vertical, its children float over the avatar */
-body[data-layout="horizontal"] .prompt h1 { font-size: 3.1cqw; }
-body[data-layout="horizontal"] .prompt .en { font-size: 1.6cqw; }
-body[data-layout="horizontal"] .tap-hint { font-size: 1.6cqw; }
+/* ---------- overlays ---------- */
+.overlay { position: absolute; inset: 0; z-index: 8; display: none; place-items: center; text-align: center;
+  background: rgba(11,23,48,.86); backdrop-filter: blur(4px); padding: 8cqmin; }
+body.st-thanks #thanks { display: grid; }
+#thanks h2 { font-size: 6cqmin; font-weight: 700; }
+#thanks p { color: var(--ink-dim); font-size: 3cqmin; margin-top: 2cqmin; }
+.toast { position: absolute; left: 50%; top: 13cqh; transform: translate(-50%, -1cqh); z-index: 9; max-width: 86cqw;
+  padding: 1.8cqmin 3cqmin; border-radius: 2cqmin; background: rgba(19,37,74,.96); border: 1px solid var(--line);
+  font-size: 2.8cqmin; text-align: center; opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.toast.warn { border-color: #8a6a1f; color: #ffd27a; }
+#corner { position: absolute; left: 0; top: 0; width: 9cqmin; height: 9cqmin; z-index: 7; }
 
-.suggest { margin-top: 4cqh; }
-.suggest h3 { font-size: 1.1cqw; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); font-weight: 500; margin-bottom: 1.2cqh; }
-.suggest li {
-  list-style: none; margin-top: 1.2cqh; padding: 1.4cqh 1.2cqw; border-radius: 1cqw;
-  background: rgba(255,255,255,.05); border: 1px solid var(--line); font-size: 1.35cqw;
-}
-body[data-layout="vertical"] .suggest { display: none; }
+/* ---------- setup ---------- */
+#setup { position: fixed; inset: 0; z-index: 20; display: none; overflow: auto; background: rgba(5,11,24,.94);
+  -webkit-user-select: text; user-select: text; }
+body.setup-open #setup { display: block; }
+.card { max-width: 640px; margin: 5vh auto; padding: 28px; border-radius: 18px; background: var(--bg); border: 1px solid var(--line); }
+.card h2 { font-size: 22px; }
+.card .lead { color: var(--ink-dim); font-size: 14px; margin-top: 4px; }
+.field { margin-top: 22px; }
+.field > label { display: block; font-size: 13px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.layouts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lay { padding: 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg-2); text-align: left; display: flex; gap: 14px; align-items: center; }
+.lay[aria-pressed="true"] { border-color: var(--accent); }
+.lay i { flex: none; display: block; border: 2px solid var(--ink-dim); border-radius: 4px; position: relative; }
+.lay i.v { width: 27px; height: 48px; } .lay i.h { width: 56px; height: 32px; }
+.lay i::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 40%; height: 70%; transform: translateX(-50%);
+  background: var(--accent); border-radius: 50% 50% 3px 3px / 30% 30% 3px 3px; }
+.lay i.h::after { left: 30%; width: 34%; height: 80%; }
+.lay b { display: block; font-size: 15px; } .lay small { color: var(--ink-dim); font-size: 12px; }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg button { padding: 9px 16px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg-2); font-size: 14px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.voices { display: grid; gap: 8px; }
+.voice { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg-2); }
+.voice[aria-pressed="true"] { border-color: var(--accent); }
+.voice span { flex: 1; text-align: left; font-size: 15px; }
+.voice .play { padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); font-size: 13px; color: var(--ink-dim); }
+.status { margin-top: 22px; padding: 12px 14px; border-radius: 12px; background: var(--bg-2); font-size: 14px; color: var(--ink-dim); display: flex; gap: 10px; align-items: center; }
+.status i { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-dim); flex: none; }
+.status.ok i { background: var(--ok); } .status.bad i { background: var(--listen); }
+.actions { margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.primary { padding: 13px 24px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 16px; }
+.ghost { padding: 13px 18px; border-radius: 12px; border: 1px solid var(--line); font-size: 14px; }
+.foot { margin-top: 18px; color: var(--ink-dim); font-size: 12.5px; line-height: 1.6; }
+.foot code { background: var(--bg-2); padding: 1px 6px; border-radius: 6px; }
 
-/* ---------- LIVE ---------- */
-#frameHost { position: absolute; inset: 0; overflow: hidden; }
-#frameHost iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-/* Horizontal layout + tall (full-body) feed, before Chat now: show the embed as a 9:16 card centred
-   on the dark background, so there are no white bars beside the avatar. */
-body.feed-tall[data-layout="horizontal"] #live:not(.talking) #frameHost iframe {
-  width: calc(100cqh * 9 / 16); left: calc(50% - 100cqh * 9 / 32);
-}
-
-/* Waiting (embed's own start screen) vs talking */
-#live:not(.talking) #timeLeft, #live:not(.talking) #bar { display: none; }
-body.one-tap #live:not(.talking) #endBtn { display: none; }
-#live:not(.talking) .when-talking, #live.talking .when-waiting { display: none !important; }
-#live.talking .live-brand { display: none; }
-.live-brand { pointer-events: none; }
-.live-brand span { display: inline-block; padding: .45em 1.1em; border-radius: 999px; background: var(--panel); }
-body[data-layout="horizontal"] .live-brand span { background: none; padding: 0; }
-/* Zoom (>1) crops a full-body feed to half body by making the iframe itself bigger, anchored top-centre,
-   so LiveAvatar renders at full resolution. Only applied once the visitor has pressed "Chat now",
-   so the embed's own Chat-now bar at the bottom is never cropped off. */
-#live.talking #frameHost iframe {
-  width: calc(100% * var(--zoom)); height: calc(100% * var(--zoom));
-  left: calc(50% - 50% * var(--zoom));
-}
-#bar {
-  position: absolute; top: 0; left: 0; height: .6cqh; min-height: 4px; width: 100%; z-index: 3;
-  background: var(--accent); transform-origin: left; pointer-events: none;
-}
-#bar.warn { background: var(--danger); }
-#warnToast {
-  position: absolute; left: calc(var(--avatar-w) / 2); top: 16%; transform: translateX(-50%); z-index: 3;
-  padding: .8em 1.3em; border-radius: 14px; background: var(--panel); text-align: center;
-  pointer-events: none; opacity: 0; transition: opacity .4s; white-space: nowrap;
-}
-body[data-layout="vertical"]   #warnToast { font-size: 3.4cqw; }
-body[data-layout="horizontal"] #warnToast { font-size: 1.6cqw; }
-#warnToast.show { opacity: 1; }
-#startHint {
-  position: absolute; left: calc(var(--avatar-w) / 2); bottom: 15%; transform: translateX(-50%); z-index: 3;
-  padding: .8em 1.3em; border-radius: 14px; background: var(--panel); text-align: center;
-  pointer-events: none; opacity: 0; transition: opacity .4s; white-space: nowrap;
-}
-#startHint small { display: block; margin-top: .25em; font-size: .7em; color: var(--ink-dim); }
-#startHint.show { opacity: 1; animation: nudgeX 2.4s ease-in-out infinite; }
-@keyframes nudgeX { 0%,100% { transform: translate(-50%, 0) } 50% { transform: translate(-50%, 6px) } } /* bob toward the button */
-body[data-layout="vertical"]   #startHint { font-size: 3.6cqw; }
-body[data-layout="horizontal"] #startHint { font-size: 1.7cqw; }
-
-#timeLeft { font-variant-numeric: tabular-nums; font-weight: 500; }
-button.pill {
-  font: inherit; font-weight: 700; border: 0; border-radius: 999px; cursor: pointer;
-  padding: .65em 1.2em; color: #fff; background: var(--danger);
-}
-.live-title { display: none; }
-
-body[data-layout="vertical"] #liveHud {
-  position: absolute; top: 1.6cqh; right: 3cqw; z-index: 3; display: flex; gap: 2cqw; align-items: center;
-}
-body[data-layout="vertical"] #timeLeft { padding: .5em .9em; border-radius: 999px; background: var(--panel); font-size: 2.6cqw; }
-body[data-layout="vertical"] #endBtn { font-size: 2.6cqw; }
-
-body[data-layout="horizontal"] #liveHud { display: flex; flex-direction: column; }
-body[data-layout="horizontal"] .live-title { display: block; font-size: 2.2cqw; font-weight: 700; }
-body[data-layout="horizontal"] .live-title small { display: block; font-size: 1.2cqw; font-weight: 400; color: var(--ink-dim); margin-top: .3em; }
-body[data-layout="horizontal"] #timeLeft { display: block; margin-top: 3cqh; font-size: 5cqw; color: var(--accent); line-height: 1; }
-body[data-layout="horizontal"] #endBtn { margin-top: 4cqh; font-size: 1.5cqw; align-self: flex-start; }
-
-/* ---------- THANKS ---------- */
-#thanks { background: radial-gradient(120% 80% at 50% 40%, var(--bg-2), var(--bg)); text-align: center; }
-#thanks.on { display: flex; align-items: center; justify-content: center; padding: 24px; }
-#thanks h2 { font-size: 7cqmin; }
-#thanks p  { margin-top: .5em; font-size: 3.4cqmin; color: var(--ink-dim); }
-
-/* ---------- SETUP (plain page, not scaled to the stage) ---------- */
-#setup {
-  position: fixed; inset: 0; z-index: 20; background: var(--bg); overflow-y: auto; padding: 24px 16px;
-  -webkit-user-select: text; user-select: text;
-}
-#setup .card { max-width: 680px; margin: 0 auto; }
-#setup h2 { font-size: 24px; margin-bottom: 6px; }
-#setup .sub { color: var(--ink-dim); margin-bottom: 8px; line-height: 1.55; font-size: 15px; }
-#setup label { display: block; font-weight: 500; margin: 18px 0 6px; font-size: 15px; }
-#setup .hint { color: var(--ink-dim); font-size: 13px; margin-top: 4px; line-height: 1.45; }
-#setup textarea, #setup input, #setup select {
-  width: 100%; font: inherit; font-size: 15px; color: var(--ink);
-  background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
-}
-#setup textarea { min-height: 100px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
-#setup .row { display: flex; gap: 12px; flex-wrap: wrap; }
-#setup .row > div { flex: 1 1 180px; }
-#setup .seg { display: flex; gap: 8px; flex-wrap: wrap; }
-#setup .seg button {
-  flex: 1 1 200px; text-align: left; font: inherit; color: var(--ink); cursor: pointer;
-  background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
-}
-#setup .seg button b { display: block; font-size: 15px; }
-#setup .seg button span { font-size: 13px; color: var(--ink-dim); }
-#setup .seg button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-#setup .actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
-#setup .actions button { background: var(--accent); color: #1b1300; font-size: 15px; }
-#setup .actions button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-#setupErr { color: #ff8a80; margin-top: 12px; min-height: 1.2em; font-size: 14px; }
-code { background: var(--bg-2); padding: 1px 6px; border-radius: 6px; font-size: .92em; }
-
-/* ---------- DEBUG LOG ---------- */
-#debug {
-  position: fixed; left: 8px; bottom: 8px; width: min(520px, calc(100% - 16px)); max-height: 38vh;
-  overflow: auto; z-index: 50; display: none;
-  background: rgba(0,0,0,.85); color: #9fe39f; border-radius: 8px; padding: 8px 10px;
-  font: 12px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-all;
-  -webkit-user-select: text; user-select: text;
-}
-#debug.on { display: block; }
+#debug { position: fixed; right: 8px; bottom: 8px; width: min(560px, 92vw); max-height: 40vh; overflow: auto; z-index: 30;
+  background: rgba(0,0,0,.82); color: #9fe0b8; font: 11px/1.45 ui-monospace, Menlo, monospace; padding: 8px; border-radius: 8px;
+  display: none; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
+body.debug #debug { display: block; }
 </style>
 </head>
-<body data-layout="vertical">
-
+<body data-layout="vertical" class="st-idle">
 <div id="stage">
+  <div id="avatar">
+    <img id="still" src="assets/avatar-idle.jpg" alt="">
+    <video id="video" playsinline autoplay></video>
+    <div class="shade"></div>
+  </div>
+  <div class="bar" id="bar"></div>
 
-  <!-- IDLE: free looping video, no LiveAvatar session -->
-  <section id="idle" class="screen" aria-label="Chạm để bắt đầu">
-    <div class="avatar-area">
-      <video id="idleVideo" muted loop playsinline autoplay preload="auto" hidden></video>
-      <div id="idleFallback">
-        <div class="pulse">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div class="brand">Học viện Ngoại giao · Diplomatic Academy of Vietnam</div>
-    <div class="side">
-      <div class="prompt">
-        <h1>Xin chào! Mình có thể giúp gì cho bạn?</h1>
-        <p class="en">Hello! How can I help you today?</p>
-        <span class="tap-hint">Chạm để trò chuyện · Tap to talk</span>
-        <div class="suggest">
-          <h3>Bạn có thể hỏi · Try asking</h3>
-          <ul class="suggestList"></ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- LIVE: LiveAvatar iframe.
-       .waiting = the embed's own pre-start screen ("Chat now"), used as the idle screen in one-tap mode
-       .talking = the visitor pressed Chat now; credits are being used -->
-  <section id="live" class="screen" aria-label="Trò chuyện với trợ lý">
-    <div class="avatar-area"><div id="frameHost"></div></div>
-    <div class="brand live-brand"><span>Học viện Ngoại giao · Diplomatic Academy of Vietnam</span></div>
-    <div id="bar"></div>
-    <div id="warnToast">Còn 30 giây nữa · 30 seconds left</div>
-    <div id="startHint">Nhấn <b>“Chat now”</b> để trò chuyện<small>Tap “Chat now” to talk</small></div>
-    <div class="side" id="liveSide">
-      <div id="liveHud">
-        <div class="live-title when-waiting">Xin chào! Mình có thể giúp gì cho bạn?<small>Hello! Tap “Chat now” and just speak.</small></div>
-        <div class="live-title when-talking">Đang trò chuyện<small>Live conversation · nói tự nhiên, mình đang nghe</small></div>
-        <span id="timeLeft">3:00</span>
-        <div class="suggest">
-          <h3>Gợi ý câu hỏi · Try asking</h3>
-          <ul class="suggestList"></ul>
-        </div>
-        <button class="pill" id="endBtn" type="button">Kết thúc · End</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- THANKS -->
-  <section id="thanks" class="screen">
+  <header class="brand">
+    <div class="brand-mark">DAV</div>
     <div>
-      <h2>Cảm ơn bạn!</h2>
-      <p>Thank you — see you again soon.</p>
+      <div class="brand-t1" data-t="brand1"></div>
+      <div class="brand-t2" data-t="brand2"></div>
     </div>
-  </section>
+  </header>
+  <div class="timer" id="timer">5:00</div>
 
+  <aside class="side">
+    <h1 data-t="hello"></h1>
+    <p class="intro" data-t="intro"></p>
+    <ol class="steps">
+      <li><b>1</b><span data-t="step1"></span></li>
+      <li><b>2</b><span data-t="step2"></span></li>
+      <li><b>3</b><span data-t="step3"></span></li>
+    </ol>
+    <div class="suggest">
+      <h3 data-t="youCanAsk"></h3>
+      <div class="chips" id="chips"></div>
+    </div>
+  </aside>
+
+  <div id="captions"><p id="capUser"></p><p id="capAvatar"></p></div>
+
+  <div class="dock">
+    <div class="ptt-row">
+      <button id="ptt" aria-label="Push to talk">
+        <span class="ring"></span><span class="ring2"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor" stroke="none"/>
+          <path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/>
+        </svg>
+      </button>
+      <button id="endBtn" data-t="end"></button>
+    </div>
+    <div class="ptt-label" id="pttLabel"></div>
+    <div class="ptt-sub" id="pttSub"></div>
+  </div>
+
+  <div class="overlay" id="thanks"><div><h2 data-t="thanks"></h2><p data-t="thanksSub"></p></div></div>
+  <div class="toast" id="toast"></div>
+  <div id="corner" aria-hidden="true"></div>
 </div>
 
-<!-- SETUP -->
-<section id="setup" class="screen">
+<section id="setup" aria-label="Setup">
   <div class="card">
-    <h2>Kiosk setup</h2>
-    <p class="sub">
-      Paste the <b>Embed</b> snippet from app.liveavatar.com (Avatar → Embed → copy the HTML).
-      <b>No API key goes here</b>: the embed carries its own access.
-      Settings are saved on this device, separately for each layout.
-      Reopen this screen with <code>Shift + S</code> or <code>?setup</code> in the URL.
-    </p>
+    <h2>Cài đặt kiosk · Kiosk setup</h2>
+    <p class="lead">Chọn một lần, máy sẽ nhớ. Avatar DAV Receptionist đã được cài sẵn, không cần dán link.</p>
 
-    <label>Layout</label>
-    <div class="seg" id="layoutSeg">
-      <button type="button" data-layout="vertical"><b>Vertical · full body</b><span>Portrait 9:16 screen, avatar fills it head to toe</span></button>
-      <button type="button" data-layout="horizontal"><b>Horizontal · half body</b><span>Landscape 16:9 screen, avatar left, info panel right</span></button>
-    </div>
-    <div class="hint" id="layoutHint"></div>
-
-    <label for="embedIn">LiveAvatar embed snippet or URL (for this layout)</label>
-    <textarea id="embedIn" spellcheck="false" placeholder='<iframe src="https://..." ...></iframe>'></textarea>
-
-    <div class="row">
-      <div>
-        <label for="secIn">Session length (seconds)</label>
-        <input id="secIn" type="number" min="30" max="3600" step="10">
-        <div class="hint">Keep this at or below the time limit set in the LiveAvatar Embed modal.</div>
-      </div>
-      <div>
-        <label for="zoomIn">Avatar zoom</label>
-        <input id="zoomIn" type="number" min="1" max="3" step="0.05">
-        <div class="hint">1 = as LiveAvatar sends it. Above 1 crops from the top down once the chat starts, e.g. 2 turns a full-body feed into half body.</div>
+    <div class="field">
+      <label>Bố cục màn hình · Layout</label>
+      <div class="layouts">
+        <button class="lay" data-layout="vertical"><i class="v"></i><div><b>Dọc · toàn thân</b><small>Màn hình đứng 9:16</small></div></button>
+        <button class="lay" data-layout="horizontal"><i class="h"></i><div><b>Ngang · nửa người</b><small>Màn hình ngang 16:9</small></div></button>
       </div>
     </div>
 
-    <label for="orientIn">LiveAvatar feed orientation</label>
-    <select id="orientIn">
-      <option value="match">Match the layout</option>
-      <option value="vertical">Vertical (tall feed: full-body avatars)</option>
-      <option value="horizontal">Horizontal (wide feed)</option>
-    </select>
-    <div class="hint">For a full-body avatar on the horizontal layout, choose Vertical and set zoom to about 2.</div>
+    <div class="field">
+      <label>Thời lượng mỗi lượt · Session length</label>
+      <div class="seg" id="segMinutes">
+        <button data-v="3">3 phút</button><button data-v="5">5 phút</button><button data-v="10">10 phút</button><button data-v="15">15 phút</button><button data-v="20">20 phút</button>
+      </div>
+    </div>
 
-    <label for="startIn">How visitors start</label>
-    <select id="startIn">
-      <option value="one-tap">One tap: the avatar waits on screen, visitors tap “Chat now”</option>
-      <option value="two-tap">Two taps: our idle screen / video first, then “Chat now”</option>
-    </select>
-    <div class="hint">One tap is simpler for visitors. Two taps lets you show your own idle video.</div>
+    <div class="field">
+      <label>Ngôn ngữ · Language</label>
+      <div class="seg" id="segLang">
+        <button data-v="vi">Tiếng Việt</button><button data-v="en">English</button><button data-v="multi">Đa ngôn ngữ</button>
+      </div>
+    </div>
 
-    <label for="vidIn">Idle video (optional)</label>
-    <input id="vidIn" type="text" placeholder="idle-vertical.mp4">
-    <div class="hint">A file next to this page, or a URL. Leave empty for the animated screen.</div>
+    <div class="field">
+      <label>Giọng nói · Voice</label>
+      <div class="voices" id="voices"></div>
+    </div>
 
-    <div id="setupErr"></div>
+    <div class="status" id="status"><i></i><span>Đang kiểm tra máy chủ…</span></div>
+
     <div class="actions">
-      <button class="pill" id="saveBtn" type="button">Save &amp; start kiosk</button>
-      <button class="pill ghost" id="testBtn" type="button">Save &amp; start a session now</button>
-      <button class="pill ghost" id="debugBtn" type="button">Toggle debug log</button>
+      <button class="primary" id="saveBtn">Lưu &amp; bắt đầu</button>
+      <button class="ghost" id="micBtn">Kiểm tra micro</button>
     </div>
+    <p class="foot">
+      Mở lại cài đặt: <code>Shift+S</code>, thêm <code>?setup</code> vào link, hoặc giữ góc trên bên trái màn hình 3 giây.<br>
+      Link mở thẳng một bố cục: <code>?layout=vertical</code> · <code>?layout=horizontal</code>.
+    </p>
   </div>
 </section>
-
 <pre id="debug"></pre>
 
-<script>
-(() => {
-  'use strict';
+<script type="module">
+import {
+  LiveAvatarSession, SessionEvent, AgentEventsEnum, SessionInteractivityMode,
+} from './vendor/liveavatar-web-sdk-0.0.20.min.js';
 
-  /* ---------------- CONFIG ---------------- */
-  const CONFIG = {
-    defaultLayout: 'vertical',
-    warnSeconds: 30,        // "30 seconds left" toast
-    thanksSeconds: 4,       // thank-you screen before returning to idle
-    prestartSeconds: 45,    // two-tap mode: back to our idle screen if nobody presses "Chat now" in time
-    idleRefreshMinutes: 15, // one-tap mode: reload the waiting embed this often so its start screen never goes stale
-    autoOrientation: true,  // set ?orientation= on liveavatar.com embeds from each layout's "orientation" setting
-    // Shown in the horizontal layout's side panel. Replace with real DAV questions.
+/* ======================= configuration ======================= */
+const API_BASE_DEFAULT = 'https://dav-avatar-kiosk-api.vercel.app';
+const VOICES = [
+  { id: '6a928a3e-8c89-458a-988e-879ee71635d2', name: 'Violetta A' },
+  { id: '214c4905-3992-4083-91f4-dbeb130e766e', name: 'Violetta B' },
+];
+const DEFAULTS = { layout: 'vertical', minutes: 5, language: 'vi', voice: VOICES[0].id };
+const IDLE_END_SECONDS = 60;      // end early when nobody talks for this long
+const WARN_SECONDS = 30;          // "30 seconds left" notice
+const THANKS_SECONDS = 4;
+const HOLD_MS = 350;              // shorter press = tap-to-toggle instead of hold
+const MAX_LISTEN_SECONDS = 30;    // stop listening automatically after this
+const CONNECT_TIMEOUT_SECONDS = 45;
+const STORE = 'dav-avatar-kiosk:v3';
+
+const TEXT = {
+  vi: {
+    brand1: 'Học viện Ngoại giao', brand2: 'DAV Receptionist · DAV Alumni Day 2026',
+    hello: 'Xin chào, tôi là DAV Receptionist', intro: 'Lễ tân AI của Học viện Ngoại giao. Hãy hỏi tôi về sự kiện, Học viện và mạng lưới DAV Alumni.',
+    step1: 'Chạm nút micro để bắt đầu', step2: 'Giữ nút khi bạn nói', step3: 'Thả tay ra, tôi sẽ trả lời',
+    youCanAsk: 'Bạn có thể hỏi', end: 'Kết thúc',
+    idle: 'Chạm để bắt đầu trò chuyện', idleSub: 'DAV Receptionist luôn sẵn sàng hỗ trợ bạn',
+    connecting: 'Đang kết nối…', connectingSub: 'Chờ vài giây nhé',
+    ready: 'Giữ nút để nói', readySub: 'Thả tay ra khi nói xong',
+    holding: 'Đang nghe… thả tay để gửi', toggled: 'Đang nghe… chạm lần nữa để gửi', listeningSub: 'Hãy nói câu hỏi của bạn',
+    thinking: 'Đang suy nghĩ…', speaking: 'Đang trả lời', speakingSub: 'Giữ nút để ngắt lời và hỏi tiếp',
+    ending: 'Đang kết thúc…',
+    thanks: 'Cảm ơn bạn đã ghé thăm!', thanksSub: 'Chúc bạn một ngày trở về thật ý nghĩa.',
+    youSaid: 'Bạn: ',
+    warn: 'Còn 30 giây', idleWarn: 'Không thấy ai nói. Phiên sẽ tự kết thúc sau 15 giây.',
+    errBusy: 'Hệ thống đang bận. Vui lòng thử lại sau ít phút.',
+    errNet: 'Không kết nối được. Vui lòng thử lại.',
+    errMic: 'Không bật được micro. Hãy cho phép trình duyệt dùng micro.',
+    errCredits: 'Đã hết lượt sử dụng hôm nay.',
     suggestions: [
-      'Phòng Đào tạo ở đâu?',
-      'Thư viện mở cửa lúc mấy giờ?',
-      'Làm sao để tham gia câu lạc bộ?',
-      'Where is the international office?',
+      'DAV Alumni Day 2026 có những hoạt động gì?',
+      'Làm sao để tham gia mạng lưới DAV Alumni?',
+      'Học viện Ngoại giao được thành lập khi nào?',
+      'Tôi có thể liên hệ DAV Alumni bằng cách nào?',
     ],
-    // Per-layout defaults; the setup panel overrides these on each device.
-    // orientation: 'match' = same as the layout; 'vertical' = tall feed; 'horizontal' = wide feed.
-    // A tall full-body avatar on the horizontal layout looks best as orientation 'vertical' + zoom ≈ 2.
-    // startMode: 'one-tap' = LiveAvatar's own start screen is the idle screen, visitors tap "Chat now" once;
-    //            'two-tap' = our own idle screen/video first, then "Chat now".
-    layouts: {
-      vertical:   { embedUrl: '', sessionSeconds: 180, idleVideo: '', zoom: 1, orientation: 'match', startMode: 'one-tap' },
-      horizontal: { embedUrl: '', sessionSeconds: 180, idleVideo: '', zoom: 1, orientation: 'match', startMode: 'one-tap' },
-    },
-    // If the debug log shows LiveAvatar posting a clear "session ended" message while testing,
-    // put a regex for it here so the wrapper returns to idle immediately, e.g. /session[_ ]?end/i
-    endOnMessage: null,
-  };
-  const STORE_KEY = 'dav-avatar-kiosk:v2';
-  const LAYOUTS = ['vertical', 'horizontal'];
-  const ORIENTS = ['match', 'vertical', 'horizontal'];
-  const START_MODES = ['one-tap', 'two-tap'];
-  const LAYOUT_HINT = {
-    vertical:   'Pick a full-body avatar in LiveAvatar for this one; the wrapper cannot add the legs back to a half-body avatar.',
-    horizontal: 'Use a half-body avatar, or a full-body one with zoom around 1.5–1.8.',
-  };
+  },
+  en: {
+    brand1: 'Diplomatic Academy of Vietnam', brand2: 'DAV Receptionist · DAV Alumni Day 2026',
+    hello: 'Hello, I’m the DAV Receptionist', intro: 'The Academy’s AI receptionist. Ask me about the event, the Academy and the DAV Alumni Network.',
+    step1: 'Tap the mic button to start', step2: 'Hold the button while you speak', step3: 'Let go and I’ll answer',
+    youCanAsk: 'You can ask', end: 'End',
+    idle: 'Tap to start talking', idleSub: 'The DAV Receptionist is here to help',
+    connecting: 'Connecting…', connectingSub: 'Just a few seconds',
+    ready: 'Hold to talk', readySub: 'Let go when you’re done',
+    holding: 'Listening… let go to send', toggled: 'Listening… tap again to send', listeningSub: 'Ask your question',
+    thinking: 'Thinking…', speaking: 'Answering', speakingSub: 'Hold the button to interrupt',
+    ending: 'Ending…',
+    thanks: 'Thank you for stopping by!', thanksSub: 'Enjoy your homecoming.',
+    youSaid: 'You: ',
+    warn: '30 seconds left', idleWarn: 'Nobody seems to be talking. Ending in 15 seconds.',
+    errBusy: 'The system is busy. Please try again in a few minutes.',
+    errNet: 'Couldn’t connect. Please try again.',
+    errMic: 'Couldn’t turn on the microphone. Allow microphone access in the browser.',
+    errCredits: 'No more sessions available today.',
+    suggestions: [
+      'What happens at DAV Alumni Day 2026?',
+      'How can I join the DAV Alumni Network?',
+      'When was the Diplomatic Academy founded?',
+      'How can I contact DAV Alumni?',
+    ],
+  },
+};
 
-  /* ---------------- helpers ---------------- */
-  const $ = (id) => document.getElementById(id);
-  const params = new URLSearchParams(location.search);
-  const dbg = $('debug');
-  function log(...a) {
-    const line = `[${new Date().toLocaleTimeString()}] ` + a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ');
-    console.log('[kiosk]', ...a);
-    dbg.textContent += line + '\n';
-    dbg.scrollTop = dbg.scrollHeight;
+/* ======================= settings ======================= */
+const params = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const body = document.body;
+
+function loadSaved() { try { return JSON.parse(localStorage.getItem(STORE) || 'null'); } catch { return null; } }
+function save(c) { try { localStorage.setItem(STORE, JSON.stringify(c)); } catch {} }
+
+const saved = loadSaved();
+let cfg = { ...DEFAULTS, ...(saved || {}) };
+if (params.get('layout') === 'vertical' || params.get('layout') === 'horizontal') cfg.layout = params.get('layout');
+if (params.get('minutes')) cfg.minutes = Math.min(20, Math.max(1, Number(params.get('minutes')) || 5));
+if (['vi', 'en', 'multi'].includes(params.get('lang'))) cfg.language = params.get('lang');
+if (VOICES.some(v => v.id === params.get('voice'))) cfg.voice = params.get('voice');
+const SANDBOX = params.has('sandbox');
+const API_BASE = (() => {
+  const a = params.get('api');
+  if (a && /^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)/.test(a)) return a.replace(/\/$/, '');
+  return API_BASE_DEFAULT;
+})();
+if (params.has('fill')) body.classList.add('fill');
+if (params.has('debug')) body.classList.add('debug');
+
+const T = () => TEXT[cfg.language === 'en' ? 'en' : 'vi'];
+
+function applyConfig() {
+  body.dataset.layout = cfg.layout;
+  document.documentElement.lang = cfg.language === 'en' ? 'en' : 'vi';
+  for (const el of document.querySelectorAll('[data-t]')) el.textContent = T()[el.dataset.t];
+  const chips = $('chips'); chips.innerHTML = '';
+  for (const q of T().suggestions) {
+    const b = document.createElement('button'); b.className = 'chip'; b.textContent = q;
+    b.addEventListener('click', () => askText(q));
+    chips.appendChild(b);
   }
-  function loadStore() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { return {}; } }
-  function saveStore(obj) { try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch { log('localStorage unavailable; settings kept for this page load only'); } }
+  render();
+}
 
-  // Accept a full <iframe ...> snippet or a bare URL; return the https src or ''.
-  function extractSrc(text) {
-    const t = (text || '').trim();
-    if (!t) return '';
-    const m = t.match(/src\s*=\s*["']([^"']+)["']/i);
-    const url = (m ? m[1] : t).replace(/&amp;/g, '&');
-    try {
-      const u = new URL(url, location.href);
-      const local = ['localhost', '127.0.0.1'].includes(u.hostname);   // allows the mock page for dry runs
-      return (u.protocol === 'https:' || (local && u.protocol === 'http:')) ? u.href : '';
-    } catch { return ''; }
+/* ======================= debug log ======================= */
+const logLines = [];
+function log(...a) {
+  const line = new Date().toLocaleTimeString() + '  ' + a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ');
+  logLines.push(line); if (logLines.length > 200) logLines.shift();
+  $('debug').textContent = logLines.join('\n'); $('debug').scrollTop = 1e9;
+  console.log('[kiosk]', ...a);
+}
+
+/* ======================= state ======================= */
+let state = 'idle';            // idle | connecting | live | ending | thanks
+let session = null;
+let endsAt = 0, totalMs = 0;
+let lastActivity = 0;
+let warned = false, idleWarned = false;
+let avatarSpeaking = false, thinking = false;
+let ptt = { on: false, mode: null, downAt: 0, chain: Promise.resolve(), timer: 0 };
+let connectTimer = 0, thanksTimer = 0;
+
+function setState(s) {
+  state = s;
+  body.classList.remove('st-idle', 'st-connecting', 'st-live', 'st-ending', 'st-thanks');
+  body.classList.add('st-' + s);
+  render();
+}
+
+function render() {
+  const t = T();
+  let label = t.idle, sub = t.idleSub;
+  if (state === 'connecting') { label = t.connecting; sub = t.connectingSub; }
+  else if (state === 'ending' || state === 'thanks') { label = t.ending; sub = ''; }
+  else if (state === 'live') {
+    if (ptt.on) { label = ptt.mode === 'toggle' ? t.toggled : t.holding; sub = t.listeningSub; }
+    else if (avatarSpeaking) { label = t.speaking; sub = t.speakingSub; }
+    else if (thinking) { label = t.thinking; sub = ''; }
+    else { label = t.ready; sub = t.readySub; }
   }
-  const clampNum = (v, lo, hi, d) => { v = +v; return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+  $('pttLabel').textContent = label;
+  $('pttSub').textContent = sub;
+  body.classList.toggle('listening', state === 'live' && ptt.on);
+  body.classList.toggle('speaking', state === 'live' && avatarSpeaking);
+}
 
-  /* ---------------- settings: CONFIG < saved < URL params ---------------- */
-  const store = loadStore();   // { lastLayout, vertical:{...}, horizontal:{...} }
-  let layout = LAYOUTS.includes(params.get('layout')) ? params.get('layout')
-             : LAYOUTS.includes(store.lastLayout) ? store.lastLayout : CONFIG.defaultLayout;
+let toastTimer = 0;
+function toast(msg, kind = '', ms = 4000) {
+  const el = $('toast'); el.textContent = msg; el.className = 'toast on ' + kind;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.className = 'toast'; }, ms);
+}
 
-  function settingsFor(l) {
-    const base = { ...CONFIG.layouts[l], ...(store[l] || {}) };
-    if (l === layout) {   // URL params only apply to the layout being shown
-      if (params.get('embed')) base.embedUrl = extractSrc(params.get('embed')) || base.embedUrl;
-      if (params.get('seconds')) base.sessionSeconds = clampNum(params.get('seconds'), 30, 3600, base.sessionSeconds);
-      if (params.has('video')) base.idleVideo = params.get('video');
-      if (params.get('zoom')) base.zoom = clampNum(params.get('zoom'), 1, 3, base.zoom);
-      if (ORIENTS.includes(params.get('orientation'))) base.orientation = params.get('orientation');
-      if (START_MODES.includes(params.get('start'))) base.startMode = params.get('start');
-    }
-    return base;
-  }
-  let S = settingsFor(layout);
+function setCaption(who, text) {
+  if (who === 'user') $('capUser').textContent = text ? T().youSaid + text : '';
+  else $('capAvatar').textContent = text || '';
+}
 
-  const isOneTap = () => S.startMode !== 'two-tap';
-  const feedOrientation = () => (ORIENTS.includes(S.orientation) && S.orientation !== 'match') ? S.orientation : layout;
+/* ======================= session ======================= */
+let attemptId = 0;
+async function startSession() {
+  if (state !== 'idle') return;
+  const attempt = ++attemptId;
+  setState('connecting');
+  setCaption('user', ''); setCaption('avatar', '');
+  log('start: requesting token', { minutes: cfg.minutes, language: cfg.language, sandbox: SANDBOX });
+  clearTimeout(connectTimer);
+  connectTimer = setTimeout(() => {
+    if (attemptId === attempt && state === 'connecting') failStart(new Error('connect timeout'));
+  }, CONNECT_TIMEOUT_SECONDS * 1000);
+  let s = null;
+  try {
+    const r = await fetch(API_BASE + '/api/session', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ minutes: cfg.minutes, language: cfg.language, voice: cfg.voice, sandbox: SANDBOX }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 429) throw Object.assign(new Error('busy'), { userMsg: T().errBusy });
+    if (!r.ok || !j.session_token) throw new Error('token: ' + (j.message || j.error || r.status));
+    if (attemptId !== attempt || state !== 'connecting') return;
+    totalMs = (j.max_session_duration || cfg.minutes * 60) * 1000;
 
-  function applyLayout() {
-    document.body.dataset.layout = layout;
-    document.body.classList.toggle('one-tap', isOneTap());
-    document.body.classList.toggle('feed-tall', feedOrientation() === 'vertical');
-    document.documentElement.style.setProperty('--zoom', S.zoom);
-    setupIdleVideo();
-    log('layout', layout, { start: isOneTap() ? 'one-tap' : 'two-tap', sessionSeconds: S.sessionSeconds, zoom: S.zoom, orientation: S.orientation || 'match', idleVideo: S.idleVideo || '(none)', embed: S.embedUrl ? 'set' : 'missing' });
-  }
-
-  if (params.has('debug')) dbg.classList.add('on');
-  if (params.has('fill')) document.body.classList.add('fill');
-  document.querySelectorAll('.suggestList').forEach(ul => {
-    CONFIG.suggestions.forEach(q => { const li = document.createElement('li'); li.textContent = q; ul.appendChild(li); });
-  });
-
-  /* ---------------- state machine ---------------- */
-  const screens = ['setup', 'idle', 'live', 'thanks'];
-  // phase inside 'live': 'waiting' (embed's own Chat-now screen, no countdown yet) → 'talking'
-  let state = null, phase = null, tickTimer = null, thanksTimer = null, endsAt = 0, refreshAt = 0, warned = false;
-
-  function show(name) {
-    screens.forEach(s => $(s).classList.toggle('on', s === name));
-    state = name;
-    log('state →', name);
-  }
-
-  // Idle: in one-tap mode that is LiveAvatar's own start screen ("Chat now"); in two-tap mode our idle screen.
-  function goIdle() {
-    clearTimeout(thanksTimer);
-    if (isOneTap() && S.embedUrl) { openEmbed(false); return; }
-    unmountFrame();
-    show('idle');
-    const v = $('idleVideo');
-    if (!v.hidden) v.play().catch(() => {});
-  }
-
-  // Two-tap mode: a tap on our idle screen opens the embed's start screen.
-  function startSession() {
-    if (state === 'live') return;
-    if (!S.embedUrl) { openSetup('Paste the embed snippet for the ' + layout + ' layout first.'); return; }
-    $('idleVideo').pause();
-    openEmbed(true);
-  }
-
-  // Mount the embed on its start screen and wait for the visitor's tap on "Chat now".
-  function openEmbed(withTimeout) {
-    clearInterval(tickTimer);
-    window.focus();                 // so a later tap inside the iframe fires window 'blur'
-    mountFrame();
-    phase = 'waiting';
-    $('live').classList.remove('talking');
-    endsAt = withTimeout ? Date.now() + CONFIG.prestartSeconds * 1000 : Infinity;
-    refreshAt = Date.now() + CONFIG.idleRefreshMinutes * 60000;
-    warned = false;
-    $('bar').classList.remove('warn');
-    $('warnToast').classList.remove('show');
-    $('startHint').classList.add('show');
-    show('live');
-    tick();
-    tickTimer = setInterval(tick, 250);
-    requestWakeLock();
-  }
-
-  // The visitor tapped inside the avatar (normally "Chat now"): start the real countdown.
-  function beginTalking(reason) {
-    if (state !== 'live' || phase !== 'waiting') return;
-    phase = 'talking';
-    endsAt = Date.now() + S.sessionSeconds * 1000;
-    $('startHint').classList.remove('show');
-    $('live').classList.add('talking');
-    log('talking:', reason);
-  }
-  // Clicks inside a cross-origin iframe can't be seen directly, but they move focus into it.
-  window.addEventListener('blur', () => setTimeout(() => {
-    if (state === 'live' && document.activeElement && document.activeElement.tagName === 'IFRAME') beginTalking('tap inside avatar');
-  }, 0));
-
-  function endSession(reason, skipThanks) {
-    if (state !== 'live') return;
-    log('session end:', reason);
-    clearInterval(tickTimer);
-    phase = null;
-    $('startHint').classList.remove('show');
-    $('live').classList.remove('talking');
-    unmountFrame();                 // removing the iframe disconnects the stream → stops credits
-    if (skipThanks) { goIdle(); return; }
-    show('thanks');
-    thanksTimer = setTimeout(goIdle, CONFIG.thanksSeconds * 1000);
-  }
-
-  function tick() {
-    if (phase === 'waiting') {
-      const s = S.sessionSeconds;
-      $('timeLeft').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-      $('bar').style.transform = 'scaleX(1)';
-      if (Date.now() >= endsAt) endSession('nobody pressed Chat now', true);
-      else if (isOneTap() && Date.now() >= refreshAt) {
-        log('refreshing the waiting embed');
-        mountFrame();
-        window.focus();
-        refreshAt = Date.now() + CONFIG.idleRefreshMinutes * 60000;
-      }
+    s = new LiveAvatarSession(j.session_token, {
+      voiceChat: { mode: SessionInteractivityMode.PUSH_TO_TALK },
+      autoKeepAlive: true,
+    });
+    session = s;
+    wire(s);
+    await s.start();
+    if (session !== s) {
+      // We gave up on this one (timeout / setup opened) but it connected anyway:
+      // close it, or it would run unseen and keep using credits.
+      log('late connection after giving up: stopping it', s.sessionId);
+      s.stop().catch(() => {});
       return;
     }
-    const left = Math.max(0, endsAt - Date.now());
-    const secs = Math.ceil(left / 1000);
-    $('timeLeft').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-    $('bar').style.transform = `scaleX(${left / (S.sessionSeconds * 1000)})`;
-    if (!warned && secs <= CONFIG.warnSeconds && S.sessionSeconds > CONFIG.warnSeconds) {
-      warned = true;
-      $('bar').classList.add('warn');
-      $('warnToast').classList.add('show');
-      setTimeout(() => $('warnToast').classList.remove('show'), 4000);
-    }
-    if (left <= 0) endSession('time limit');
+    log('session started', s.sessionId);
+    if (state === 'connecting' && s._remoteVideoTrack) goLive();
+  } catch (e) {
+    if (s && session !== s) { s.stop().catch(() => {}); return; }
+    if (attemptId === attempt && state === 'connecting') failStart(e);
   }
+}
 
-  /* ---------------- iframe ---------------- */
-  function embedSrc() {
-    let src = S.embedUrl;
-    try {
-      const u = new URL(src);
-      if (CONFIG.autoOrientation && /(^|\.)liveavatar\.com$/.test(u.hostname)) {
-        u.searchParams.set('orientation', ORIENTS.includes(S.orientation) && S.orientation !== 'match' ? S.orientation : layout);
-        src = u.href;
-      }
-    } catch {}
-    return src;
-  }
-  function mountFrame() {
-    unmountFrame();
-    const f = document.createElement('iframe');
-    f.src = embedSrc();
-    f.allow = 'microphone; camera; autoplay; fullscreen; display-capture';
-    f.setAttribute('allowfullscreen', '');
-    f.title = 'LiveAvatar';
-    f.addEventListener('load', () => log('iframe loaded'));
-    $('frameHost').appendChild(f);
-    log('iframe mounted', f.src);
-  }
-  function unmountFrame() {
-    const f = $('frameHost').querySelector('iframe');
-    if (f) { f.src = 'about:blank'; f.remove(); log('iframe removed'); }
-  }
+function failStart(e) {
+  log('start failed:', String(e && e.message || e));
+  clearTimeout(connectTimer);
+  const s = session; session = null;
+  if (s) s.stop().catch(() => {});
+  detachVideo();
+  toast((e && e.userMsg) || T().errNet, 'warn', 6000);
+  setState('idle');
+}
 
-  // Log anything LiveAvatar posts to the parent, so we can learn its events while testing.
-  window.addEventListener('message', (e) => {
-    if (state !== 'live') return;
-    let embedOrigin = '';
-    try { embedOrigin = new URL(S.embedUrl).origin; } catch {}
-    log('postMessage from', e.origin, e.data);
-    if (CONFIG.endOnMessage && e.origin === embedOrigin) {
-      const text = typeof e.data === 'string' ? e.data : JSON.stringify(e.data);
-      if (CONFIG.endOnMessage.test(text)) endSession('iframe said: ' + text.slice(0, 80));
-    }
+function wire(s) {
+  s.on(SessionEvent.SESSION_STATE_CHANGED, st => log('state', st));
+  s.on(SessionEvent.SESSION_STREAM_READY, () => {
+    if (session !== s) return;
+    log('stream ready');
+    const v = $('video');
+    s.attach(v);
+    v.muted = false;
+    v.play().catch(err => log('video.play failed', String(err)));
+    if (state === 'connecting') goLive();
   });
-
-  /* ---------------- idle video ---------------- */
-  function setupIdleVideo() {
-    const v = $('idleVideo'), fb = $('idleFallback');
-    v.onerror = v.oncanplay = null;
-    if (!S.idleVideo) { v.hidden = true; fb.hidden = false; v.removeAttribute('src'); v.load(); return; }
-    v.onerror = () => { log('idle video failed to load:', S.idleVideo); v.hidden = true; fb.hidden = false; };
-    v.oncanplay = () => { v.hidden = false; fb.hidden = true; };
-    v.src = S.idleVideo;
-    v.load();
-  }
-
-  /* ---------------- setup panel ---------------- */
-  let setupLayout = layout;
-  function fillSetup(l) {
-    setupLayout = l;
-    const s = settingsFor(l);
-    document.querySelectorAll('#layoutSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === l)));
-    $('layoutHint').textContent = LAYOUT_HINT[l];
-    $('embedIn').value = s.embedUrl;
-    $('secIn').value = s.sessionSeconds;
-    $('zoomIn').value = s.zoom;
-    $('orientIn').value = ORIENTS.includes(s.orientation) ? s.orientation : 'match';
-    $('startIn').value = START_MODES.includes(s.startMode) ? s.startMode : 'one-tap';
-    $('vidIn').value = s.idleVideo;
-    $('vidIn').placeholder = `idle-${l}.mp4`;
-  }
-  function openSetup(msg) {
-    if (state === 'live') endSession('opened setup');
-    clearTimeout(thanksTimer);
-    fillSetup(layout);
-    $('setupErr').textContent = msg || '';
-    show('setup');
-  }
-  document.querySelectorAll('#layoutSeg button').forEach(b => b.addEventListener('click', () => { fillSetup(b.dataset.layout); $('setupErr').textContent = ''; }));
-
-  function applySetup() {
-    const url = extractSrc($('embedIn').value);
-    if (!url) { $('setupErr').textContent = 'Could not find an https:// src in what you pasted.'; return false; }
-    const secs = Math.round(+$('secIn').value);
-    if (!(secs >= 30 && secs <= 3600)) { $('setupErr').textContent = 'Session length must be 30–3600 seconds.'; return false; }
-    const zoom = +$('zoomIn').value;
-    if (!(zoom >= 1 && zoom <= 3)) { $('setupErr').textContent = 'Zoom must be between 1 and 3.'; return false; }
-    store[setupLayout] = { embedUrl: url, sessionSeconds: secs, zoom, orientation: $('orientIn').value, startMode: $('startIn').value, idleVideo: $('vidIn').value.trim() };
-    store.lastLayout = setupLayout;
-    saveStore(store);
-    layout = setupLayout;
-    S = { ...store[layout] };
-    applyLayout();
-    return true;
-  }
-  $('saveBtn').onclick = () => { if (applySetup()) goIdle(); };
-  $('testBtn').onclick = () => { if (!applySetup()) return; if (isOneTap()) goIdle(); else { show('idle'); startSession(); } };
-  $('debugBtn').onclick = () => dbg.classList.toggle('on');
-
-  /* ---------------- inputs ---------------- */
-  $('idle').addEventListener('pointerup', startSession);
-  $('endBtn').addEventListener('click', () => endSession('end button'));
-  document.addEventListener('keydown', (e) => {
-    if (e.target.matches('input, textarea, select')) return;
-    const k = e.key.toLowerCase();
-    if (e.shiftKey && k === 's') openSetup();
-    else if (e.shiftKey && k === 'd') dbg.classList.toggle('on');
-    else if ((e.key === ' ' || e.key === 'Enter') && state === 'idle') startSession();
-    else if (e.key === 'Escape' && state === 'live' && (phase === 'talking' || !isOneTap())) endSession('escape key');
+  s.on(SessionEvent.SESSION_DISCONNECTED, reason => {
+    log('disconnected', reason);
+    if (session === s && (state === 'live' || state === 'connecting')) endSession('disconnected');
   });
-
-  // Hide the cursor after 3s without mouse movement (touch kiosks).
-  let cursorTimer;
-  document.addEventListener('pointermove', () => {
-    document.body.classList.remove('hide-cursor');
-    clearTimeout(cursorTimer);
-    cursorTimer = setTimeout(() => document.body.classList.add('hide-cursor'), 3000);
+  s.on(AgentEventsEnum.SESSION_STOPPED, e => {
+    log('session.stopped', e && (e.stop_reason || e.end_reason));
+    if ((e && (e.stop_reason || e.end_reason)) === 'NO_CREDITS') toast(T().errCredits, 'warn', 6000);
   });
+  s.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
+    log('avatar.speak_started');
+    if (session !== s) return;
+    avatarSpeaking = true; thinking = false; lastActivity = Date.now();
+    setCaption('avatar', '');
+    render();
+  });
+  s.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
+    log('avatar.speak_ended');
+    if (session !== s) return;
+    avatarSpeaking = false; lastActivity = Date.now(); render();
+  });
+  s.on(AgentEventsEnum.AVATAR_TRANSCRIPTION_CHUNK, e => {
+    if (session !== s || !e || !e.text) return;
+    const cur = $('capAvatar').textContent;
+    // Chunks may arrive as deltas or as the growing text; handle both.
+    setCaption('avatar', e.text.startsWith(cur) ? e.text : cur + e.text);
+  });
+  s.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, e => {
+    if (session !== s || !e) return;
+    log('avatar:', e.text); setCaption('avatar', e.text);
+  });
+  s.on(AgentEventsEnum.USER_TRANSCRIPTION, e => {
+    if (session !== s || !e) return;
+    log('user:', e.text); setCaption('user', e.text); lastActivity = Date.now();
+  });
+  s.on(AgentEventsEnum.USER_TRANSCRIPTION_CHUNK, e => {
+    if (session !== s || !e || !e.text) return;
+    log('user (partial):', e.text); setCaption('user', e.text);
+  });
+  s.on(AgentEventsEnum.USER_SPEAK_STARTED, () => log('user.speak_started'));
+  s.on(AgentEventsEnum.USER_SPEAK_ENDED, () => log('user.speak_ended'));
+  s.voiceChat.on('STATE_CHANGED', st => log('mic', st));
+}
 
-  // Keep the screen awake while the page is open.
-  let wakeLock = null, wakeLockWarned = false;
-  async function requestWakeLock() {
-    try {
-      if ('wakeLock' in navigator && !wakeLock && document.visibilityState === 'visible') {
-        wakeLock = await navigator.wakeLock.request('screen');
-        wakeLock.addEventListener('release', () => { wakeLock = null; });
-      }
-    } catch (err) {
-      if (!wakeLockWarned) { wakeLockWarned = true; log('wake lock unavailable (fine in a preview; set the OS to never sleep on the kiosk):', String(err)); }
+function goLive() {
+  clearTimeout(connectTimer);
+  if (state !== 'connecting') return;
+  body.classList.add('video-on');
+  endsAt = Date.now() + totalMs;
+  lastActivity = Date.now();
+  warned = false; idleWarned = false; avatarSpeaking = false; thinking = false;
+  setState('live');
+  log('live for', totalMs / 1000, 's');
+}
+
+async function endSession(reason) {
+  if (state !== 'live' && state !== 'connecting') return;
+  log('end:', reason);
+  clearTimeout(connectTimer);
+  stopListeningUI();
+  const s = session; session = null;
+  setState('ending');
+  if (s) await Promise.race([s.stop().catch(e => log('stop error', String(e))), new Promise(r => setTimeout(r, 6000))]);
+  detachVideo();
+  setState('thanks');
+  clearTimeout(thanksTimer);
+  thanksTimer = setTimeout(() => { setCaption('user', ''); setCaption('avatar', ''); setState('idle'); }, THANKS_SECONDS * 1000);
+}
+
+function detachVideo() {
+  body.classList.remove('video-on');
+  const v = $('video');
+  try { v.pause(); } catch {}
+  v.srcObject = null;
+  avatarSpeaking = false; thinking = false;
+}
+
+/* ======================= push to talk ======================= */
+function pttStart(mode) {
+  if (state !== 'live' || !session || ptt.on) return;
+  const s = session;
+  ptt.on = true; ptt.mode = mode; ptt.downAt = performance.now();
+  lastActivity = Date.now(); idleWarned = false;
+  if (avatarSpeaking) { try { s.interrupt(); } catch (e) { log('interrupt failed', String(e)); } }
+  render();
+  clearTimeout(ptt.timer);
+  ptt.timer = setTimeout(() => { if (ptt.on) pttStop('max'); }, MAX_LISTEN_SECONDS * 1000);
+  ptt.chain = ptt.chain.then(async () => {
+    // The mic opens right after the avatar appears; give it a moment if a
+    // visitor presses very early.
+    if (s.voiceChat.state === 'STARTING') await waitForMic(s, 10000);
+    // If opening it failed (permission prompt dismissed, mic unplugged),
+    // try once more before giving up.
+    if (s.voiceChat.state !== 'ACTIVE') {
+      log('voice chat not active, retrying the microphone');
+      await s.voiceChat.start({ mode: SessionInteractivityMode.PUSH_TO_TALK }).catch(e => log('mic retry failed', e.name || String(e)));
     }
-  }
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWakeLock(); });
+    if (s.voiceChat.state !== 'ACTIVE') throw new Error('microphone unavailable');
+    await s.voiceChat.startPushToTalk();
+  }).then(() => log('ptt started')).catch(e => {
+    log('ptt start failed', String(e && e.message || e));
+    if (session === s) { stopListeningUI(); toast(T().errMic, 'warn', 6000); }
+  });
+}
 
-  /* ---------------- boot ---------------- */
-  applyLayout();
-  if (!S.embedUrl || params.has('setup')) openSetup();
-  else goIdle();
-  requestWakeLock();
-})();
+function waitForMic(s, ms) {
+  return new Promise(resolve => {
+    const done = () => { clearTimeout(t); s.voiceChat.off && s.voiceChat.off('STATE_CHANGED', onChange); resolve(); };
+    const onChange = st => { if (st !== 'STARTING') done(); };
+    const t = setTimeout(done, ms);
+    s.voiceChat.on('STATE_CHANGED', onChange);
+  });
+}
+
+function pttStop(why) {
+  if (!ptt.on) return;
+  const s = session;
+  stopListeningUI();
+  thinking = true; lastActivity = Date.now(); render();
+  if (!s) return;
+  ptt.chain = ptt.chain.then(() => s.voiceChat.stopPushToTalk())
+    .then(() => log('ptt stopped', why || '')).catch(e => log('ptt stop failed', String(e && e.message || e)));
+  // If nothing comes back, drop the "thinking" label after a while.
+  setTimeout(() => { if (thinking && !avatarSpeaking) { thinking = false; render(); } }, 15000);
+}
+
+function stopListeningUI() {
+  ptt.on = false; ptt.mode = null; clearTimeout(ptt.timer); render();
+}
+
+function pressDown() {
+  if (state === 'idle') { startSession(); return; }
+  if (state !== 'live') return;
+  if (ptt.on && ptt.mode === 'toggle') { pttStop('tap'); return; }
+  pttStart('hold');
+}
+function pressUp() {
+  if (state !== 'live' || !ptt.on || ptt.mode !== 'hold') return;
+  if (performance.now() - ptt.downAt < HOLD_MS) { ptt.mode = 'toggle'; render(); }
+  else pttStop('release');
+}
+
+const pttBtn = $('ptt');
+pttBtn.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  try { pttBtn.setPointerCapture(e.pointerId); } catch {}
+  pressDown();
+});
+pttBtn.addEventListener('pointerup', pressUp);
+pttBtn.addEventListener('pointercancel', pressUp);
+pttBtn.addEventListener('contextmenu', e => e.preventDefault());
+$('endBtn').addEventListener('click', () => endSession('end button'));
+
+function askText(q) {
+  if (state === 'idle') { startSession(); return; }
+  if (state !== 'live' || !session) return;
+  try {
+    if (avatarSpeaking) session.interrupt();
+    session.message(q);
+    setCaption('user', q); thinking = true; lastActivity = Date.now(); render();
+    log('asked:', q);
+  } catch (e) { log('message failed', String(e)); }
+}
+
+/* ======================= timers ======================= */
+function fmt(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+setInterval(() => {
+  if (state !== 'live') return;
+  const now = Date.now(), left = endsAt - now;
+  $('timer').textContent = fmt(left);
+  $('timer').classList.toggle('low', left <= WARN_SECONDS * 1000);
+  $('bar').style.width = Math.min(100, Math.max(0, 100 * (1 - left / totalMs))) + '%';
+  if (!warned && left <= WARN_SECONDS * 1000) { warned = true; toast(T().warn, 'warn'); }
+  if (left <= 0) { endSession('time limit'); return; }
+  // Nobody talking? End early so credits aren't spent on an empty lobby.
+  if (ptt.on || avatarSpeaking || thinking) return;
+  const quiet = now - lastActivity;
+  if (!idleWarned && quiet >= (IDLE_END_SECONDS - 15) * 1000) { idleWarned = true; toast(T().idleWarn, 'warn', 14000); }
+  if (quiet >= IDLE_END_SECONDS * 1000) endSession('nobody talking');
+}, 250);
+
+/* ======================= keyboard ======================= */
+let spaceDown = false;
+document.addEventListener('keydown', e => {
+  if (body.classList.contains('setup-open')) { if (e.key === 'Escape' && saved) closeSetup(); return; }
+  if (e.shiftKey && (e.key === 'S' || e.key === 's')) { e.preventDefault(); openSetup(); return; }
+  if (e.shiftKey && (e.key === 'D' || e.key === 'd')) { body.classList.toggle('debug'); return; }
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (e.repeat || spaceDown) return; spaceDown = true; pressDown(); return; }
+  if (e.key === 'Escape') endSession('esc');
+});
+document.addEventListener('keyup', e => {
+  if (e.key === ' ' || e.key === 'Enter') { spaceDown = false; pressUp(); }
+});
+
+/* ======================= setup screen ======================= */
+let draft = { ...cfg };
+let previewAudio = null;
+
+function paintSetup() {
+  for (const b of document.querySelectorAll('.lay')) b.setAttribute('aria-pressed', String(b.dataset.layout === draft.layout));
+  for (const b of $('segMinutes').children) b.setAttribute('aria-pressed', String(Number(b.dataset.v) === Number(draft.minutes)));
+  for (const b of $('segLang').children) b.setAttribute('aria-pressed', String(b.dataset.v === draft.language));
+  for (const b of document.querySelectorAll('.voice')) b.setAttribute('aria-pressed', String(b.dataset.id === draft.voice));
+}
+
+function buildVoices() {
+  const box = $('voices'); box.innerHTML = '';
+  for (const v of VOICES) {
+    const row = document.createElement('div'); row.className = 'voice'; row.dataset.id = v.id; row.setAttribute('role', 'button');
+    row.innerHTML = '<span></span><button class="play" type="button">▶ Nghe thử</button>';
+    row.querySelector('span').textContent = v.name + (v.id === VOICES[0].id ? ' (mặc định)' : '');
+    row.addEventListener('click', () => { draft.voice = v.id; paintSetup(); });
+    row.querySelector('.play').addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (previewAudio) previewAudio.pause();
+      previewAudio = new Audio(API_BASE + '/api/voice-preview?id=' + v.id);
+      previewAudio.play().catch(err => toast('Không phát được mẫu giọng: ' + err.message, 'warn'));
+    });
+    box.appendChild(row);
+  }
+}
+
+async function checkServer() {
+  const el = $('status'); el.className = 'status'; el.querySelector('span').textContent = 'Đang kiểm tra máy chủ…';
+  try {
+    const r = await fetch(API_BASE + '/api/status');
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.message || j.error || r.status);
+    el.className = 'status ok';
+    const credits = Math.floor(j.credits_left);
+    el.querySelector('span').textContent =
+      'Máy chủ OK · còn ' + credits.toLocaleString('vi-VN') + ' credits (~' + Math.floor(credits / 2).toLocaleString('vi-VN') + ' phút trò chuyện)' +
+      ' · ' + j.active_sessions + ' phiên đang chạy' + (SANDBOX ? ' · SANDBOX (miễn phí, avatar thử)' : '');
+  } catch (e) {
+    el.className = 'status bad';
+    el.querySelector('span').textContent = 'Không kết nối được máy chủ (' + API_BASE + '): ' + (e.message || e);
+  }
+}
+
+function openSetup() {
+  if (state === 'live' || state === 'connecting') endSession('setup');
+  draft = { ...cfg };
+  paintSetup(); checkServer();
+  body.classList.add('setup-open');
+}
+function closeSetup() { body.classList.remove('setup-open'); if (previewAudio) previewAudio.pause(); }
+
+for (const b of document.querySelectorAll('.lay')) b.addEventListener('click', () => { draft.layout = b.dataset.layout; paintSetup(); });
+for (const b of $('segMinutes').children) b.addEventListener('click', () => { draft.minutes = Number(b.dataset.v); paintSetup(); });
+for (const b of $('segLang').children) b.addEventListener('click', () => { draft.language = b.dataset.v; paintSetup(); });
+$('micBtn').addEventListener('click', async () => {
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    st.getTracks().forEach(t => t.stop());
+    toast('Micro OK ✓');
+  } catch (e) { toast(T().errMic + ' (' + e.name + ')', 'warn', 6000); }
+});
+$('saveBtn').addEventListener('click', async () => {
+  cfg = { ...draft }; save(cfg); applyConfig(); closeSetup();
+  // Ask for the microphone now, so the first visitor never sees the prompt.
+  try { const st = await navigator.mediaDevices.getUserMedia({ audio: true }); st.getTracks().forEach(t => t.stop()); }
+  catch (e) { toast(T().errMic, 'warn', 6000); }
+});
+
+// Hold the top-left corner for 3 s to open setup on a touch screen.
+let cornerTimer = 0;
+$('corner').addEventListener('pointerdown', () => { cornerTimer = setTimeout(openSetup, 3000); });
+for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) $('corner').addEventListener(ev, () => clearTimeout(cornerTimer));
+
+/* ======================= kiosk niceties ======================= */
+let cursorTimer = 0;
+document.addEventListener('pointermove', () => {
+  body.classList.remove('hide-cursor'); clearTimeout(cursorTimer);
+  cursorTimer = setTimeout(() => body.classList.add('hide-cursor'), 4000);
+});
+let wakeLock = null, wakeWarned = false;
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); }
+  catch (e) { if (!wakeWarned) { wakeWarned = true; log('wake lock unavailable', e.name); } }
+}
+document.addEventListener('visibilitychange', keepAwake);
+keepAwake();
+// Leaving the page mid-session: end it so it doesn't keep billing.
+window.addEventListener('pagehide', () => { if (session) { try { session.stop(); } catch {} } });
+
+// For the debug log / automated tests.
+window.kioskState = () => ({ state, mic: session && session.voiceChat.state, ptt: ptt.on, avatarSpeaking, thinking });
+
+/* ======================= boot ======================= */
+buildVoices();
+applyConfig();
+setState('idle');
+log('kiosk ready', { api: API_BASE, layout: cfg.layout, sandbox: SANDBOX });
+if (params.has('setup') || (!saved && !params.get('layout'))) openSetup();
 </script>
 </body>
 </html>
