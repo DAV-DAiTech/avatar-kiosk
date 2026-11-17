@@ -135,6 +135,7 @@ body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 7.5cqh; }
 .credit { position: absolute; left: 0; right: 0; bottom: 1.8cqh; z-index: 4; text-align: center; pointer-events: none;
   color: var(--ink-dim); font-size: 1.9cqmin; letter-spacing: .02em; opacity: .85; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
 .credit b { color: var(--accent); font-weight: 600; }
+.credit-logo { height: 1.55em; width: auto; vertical-align: -.42em; margin: 0 .3em 0 .2em; }
 .ptt-row { position: relative; display: flex; align-items: center; justify-content: center; }
 #ptt { position: relative; width: var(--ptt); height: var(--ptt); border-radius: 50%; touch-action: none;
   display: grid; place-items: center; background: var(--accent); color: var(--accent-ink);
@@ -267,7 +268,7 @@ body.debug #debug { display: block; }
   </div>
 
   <div class="overlay" id="thanks"><div><h2 data-t="thanks"></h2><p data-t="thanksSub"></p></div></div>
-  <div class="credit">Developed by <b>DaiTech</b> – CLB AI và Công nghệ Học viện Ngoại giao</div>
+  <div class="credit">Developed by <img class="credit-logo" src="assets/daitech-fox.png" alt=""><b>DaiTech</b> – CLB AI và Công nghệ Học viện Ngoại giao</div>
   <div class="toast" id="toast"></div>
   <div id="corner" aria-hidden="true"></div>
 </div>
