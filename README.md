@@ -37,7 +37,7 @@ browser (GitHub Pages)  ──POST /api/session──▶  server/ (Vercel, holds
 
 The LiveAvatar API key is **never** on the page. It lives only in Vercel's `LIVEAVATAR_API_KEY` environment variable, and locally in the git-ignored `.env`. The server:
 
-- creates FULL-mode, **PUSH_TO_TALK** session tokens for avatar "DAV (Friendly)" with the "DAV" context;
+- creates FULL-mode, **PUSH_TO_TALK** session tokens for avatar "daitechclub1 (Friendly)" with the "DAV" context;
 - only answers pages from `dav-daitech.github.io` and localhost;
 - refuses a new session while 3 are already running (`MAX_ACTIVE`), so a leaked page can't drain credits quickly.
 

@@ -7,8 +7,8 @@ const API = 'https://api.liveavatar.com';
 
 // IDs are not secrets (they are useless without the API key), so the
 // defaults live here and can be overridden with environment variables.
-export const AVATAR_ID = process.env.AVATAR_ID || '6125b86f-fff8-4f93-8897-2a698beffba9'; // "DAV (Friendly)"
-export const CONTEXT_ID = process.env.CONTEXT_ID || '6679475a-99b0-40d1-8047-2e40c364a3d2'; // "DAV" (Phi persona + FAQ)
+export const AVATAR_ID = process.env.AVATAR_ID || '0d7da85b-8efb-4ec1-9aa7-05f1751575a9'; // "daitechclub1 (Friendly)", created 2026-11-17
+export const CONTEXT_ID = process.env.CONTEXT_ID || '6679475a-99b0-40d1-8047-2e40c364a3d2'; // "DAV" (DAV Receptionist persona + FAQ)
 export const SANDBOX_AVATAR_ID = 'dd73ea75-1218-4ef3-92ce-606d5f7fbc0a'; // "Wayne", the only sandbox avatar
 
 // Voices the kiosk may pick from (setup screen). First one is the default.
