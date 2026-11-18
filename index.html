@@ -57,6 +57,8 @@ body.fill #stage { width: 100vw; height: 100vh; }
 /* ---------- avatar: full stage (vertical) or left 56% (horizontal, half body) ---------- */
 #avatar { position: absolute; inset: 0; overflow: hidden; background: #0d1a33; }
 body[data-layout="horizontal"] #avatar { right: auto; width: 56cqw; }
+/* horizontal: the portrait video is cropped to a near-square panel; drop the crop a little so the face sits in the upper half, clear of the button */
+body[data-layout="horizontal"] #avatar img, body[data-layout="horizontal"] #avatar video { object-position: 50% 32%; }
 #avatar img, #avatar video {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; object-position: 50% 0%;
@@ -120,7 +122,15 @@ body:not(.st-live) .chip { opacity: .55; }
   overflow: hidden; pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%); mask-image: linear-gradient(to bottom, transparent 0, #000 22%); }
 body[data-layout="vertical"]   #captions { left: 6cqw; right: 6cqw; bottom: 34cqh; max-height: 19cqh; }
-body[data-layout="horizontal"] #captions { left: 4cqw; width: 48cqw; bottom: 38cqh; max-height: 24cqh; }
+/* horizontal: during a session the captions take the place of the intro + steps in the side panel, so nothing covers the avatar's face */
+body[data-layout="horizontal"] #captions { left: calc(56cqw + 3.5cqw); right: 3.5cqw; top: 23cqh; bottom: 46cqh; }
+body[data-layout="horizontal"] #captions p { text-shadow: none; }
+body[data-layout="horizontal"] #capAvatar { font-size: 3cqh; }
+body[data-layout="horizontal"] #capUser { font-size: 2.4cqh; }
+body[data-layout="horizontal"]:not(.st-live) #captions { display: none; }
+body[data-layout="horizontal"].st-live .side .intro,
+body[data-layout="horizontal"].st-live .side .steps { display: none; }
+body[data-layout="horizontal"].st-live .suggest { margin-top: auto; margin-bottom: 11cqh; }
 #captions p { text-shadow: 0 1px 8px rgba(0,0,0,.6); }
 #capUser { color: var(--ink-dim); font-size: 3cqmin; font-style: italic; }
 #capAvatar { font-size: 3.6cqmin; line-height: 1.4; font-weight: 500; }
@@ -129,7 +139,7 @@ body[data-layout="horizontal"] #captions { left: 4cqw; width: 48cqw; bottom: 38c
 /* ---------- dock: push-to-talk + end ---------- */
 .dock { position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
 body[data-layout="vertical"]   .dock { left: 0; right: 0; bottom: 6.5cqh; }
-body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 7.5cqh; }
+body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 6cqh; }
 
 /* ---------- credit line, bottom centre ---------- */
 .credit { position: absolute; left: 0; right: 0; bottom: 1.8cqh; z-index: 4; text-align: center; pointer-events: none;
@@ -142,7 +152,7 @@ body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 7.5cqh; }
   box-shadow: 0 1cqmin 4cqmin rgba(0,0,0,.45), inset 0 -.8cqmin 0 rgba(0,0,0,.12);
   transition: transform .12s ease, background .2s ease; }
 body[data-layout="vertical"]   #ptt { --ptt: 21cqw; }
-body[data-layout="horizontal"] #ptt { --ptt: 19cqh; }
+body[data-layout="horizontal"] #ptt { --ptt: 15cqh; }
 #ptt svg { width: 42%; height: 42%; }
 #ptt:active { transform: scale(.96); }
 #ptt .ring, #ptt .ring2 { position: absolute; inset: -1.4cqmin; border-radius: 50%; border: .5cqmin solid var(--accent);
@@ -161,7 +171,7 @@ body.speaking:not(.listening) #ptt { background: #f0cf7d; }
 #endBtn { position: absolute; left: calc(50% + var(--ptt-half) + 4cqmin); padding: 1.4cqmin 2.6cqmin; border-radius: 99px;
   border: 1px solid var(--line); background: rgba(11,23,48,.75); font-size: 2.6cqmin; font-weight: 600; display: none; white-space: nowrap; }
 body[data-layout="vertical"]   #endBtn { --ptt-half: 10.5cqw; }
-body[data-layout="horizontal"] #endBtn { --ptt-half: 9.5cqh; }
+body[data-layout="horizontal"] #endBtn { --ptt-half: 7.5cqh; }
 body.st-live #endBtn { display: block; }
 
 /* ---------- overlays ---------- */
