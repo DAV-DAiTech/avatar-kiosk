@@ -56,7 +56,7 @@ body.fill #stage { width: 100vw; height: 100vh; }
 
 /* ---------- avatar: full stage (vertical) or left 56% (horizontal, half body) ---------- */
 #avatar { position: absolute; inset: 0; overflow: hidden; background: #0d1a33; }
-body[data-layout="horizontal"] #avatar { right: auto; width: 56cqw; }
+body[data-layout="horizontal"] #avatar { right: auto; width: 68cqw; }
 /* horizontal: the portrait video is cropped to a near-square panel; drop the crop a little so the face sits in the upper half, clear of the button */
 body[data-layout="horizontal"] #avatar img, body[data-layout="horizontal"] #avatar video { object-position: 50% 32%; }
 #avatar img, #avatar video {
@@ -79,7 +79,7 @@ body[data-layout="horizontal"] .shade {
 /* ---------- brand ---------- */
 .brand { position: absolute; display: flex; align-items: center; gap: 2cqmin; z-index: 3; }
 body[data-layout="vertical"]   .brand { top: 2.4cqh; left: 4.5cqw; }
-body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(56cqw + 3.5cqw); }
+body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(68cqw + 2.5cqw); }
 /* Academy logo on a white emblem so its blue/red read on the dark theme */
 .brand-mark { flex: none; width: 9.5cqmin; height: 9.5cqmin; border-radius: 50%; display: grid; place-items: center;
   background: #fff; padding: 1cqmin; box-shadow: 0 .6cqmin 2.4cqmin rgba(0,0,0,.35), 0 0 0 .35cqmin rgba(226,180,75,.85); }
@@ -91,7 +91,7 @@ body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(56cqw + 3.5cqw); }
 .timer { position: absolute; top: 3cqh; right: 5cqw; z-index: 3; display: none;
   padding: 1cqmin 2.2cqmin; border-radius: 99px; font-weight: 700; font-size: 3cqmin; font-variant-numeric: tabular-nums;
   background: rgba(11,23,48,.72); border: 1px solid var(--line); backdrop-filter: blur(6px); }
-body[data-layout="horizontal"] .timer { top: 5cqh; right: 3.5cqw; }
+body[data-layout="horizontal"] .timer { top: 4cqh; left: 2.5cqw; right: auto; }
 body.st-live .timer { display: block; }
 .timer.low { color: #ffd27a; border-color: #8a6a1f; }
 .bar { position: absolute; left: 0; top: 0; height: .5cqmin; background: var(--accent); z-index: 4; width: 0; display: none;
@@ -101,8 +101,8 @@ body.st-live .bar { display: block; }
 /* ---------- side panel (horizontal) ---------- */
 .side { display: none; }
 body[data-layout="horizontal"] .side {
-  display: flex; flex-direction: column; position: absolute; top: 0; bottom: 0; left: 56cqw; right: 0;
-  padding: 16cqh 3.5cqw 0; background: var(--bg); z-index: 2; }
+  display: flex; flex-direction: column; position: absolute; top: 0; bottom: 0; left: 68cqw; right: 0;
+  padding: 16cqh 2.5cqw 0; background: var(--bg); z-index: 2; }
 .side h1 { font-size: 3.6cqh; line-height: 1.15; font-weight: 700; }
 .side .intro { color: var(--ink-dim); font-size: 2.5cqh; line-height: 1.45; margin-top: 1.6cqh; max-width: 60ch; }
 .steps { list-style: none; margin-top: 3cqh; display: grid; gap: 1.4cqh; }
@@ -123,10 +123,10 @@ body:not(.st-live) .chip { opacity: .55; }
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%); mask-image: linear-gradient(to bottom, transparent 0, #000 22%); }
 body[data-layout="vertical"]   #captions { left: 6cqw; right: 6cqw; bottom: 34cqh; max-height: 19cqh; }
 /* horizontal: during a session the captions take the place of the intro + steps in the side panel, so nothing covers the avatar's face */
-body[data-layout="horizontal"] #captions { left: calc(56cqw + 3.5cqw); right: 3.5cqw; top: 23cqh; bottom: 46cqh; }
+body[data-layout="horizontal"] #captions { left: calc(68cqw + 2.5cqw); right: 2.5cqw; top: 26.5cqh; bottom: 46cqh; }
 body[data-layout="horizontal"] #captions p { text-shadow: none; }
-body[data-layout="horizontal"] #capAvatar { font-size: 3cqh; }
-body[data-layout="horizontal"] #capUser { font-size: 2.4cqh; }
+body[data-layout="horizontal"] #capAvatar { font-size: 2.7cqh; }
+body[data-layout="horizontal"] #capUser { font-size: 2.1cqh; }
 body[data-layout="horizontal"]:not(.st-live) #captions { display: none; }
 body[data-layout="horizontal"].st-live .side .intro,
 body[data-layout="horizontal"].st-live .side .steps { display: none; }
@@ -139,7 +139,18 @@ body[data-layout="horizontal"].st-live .suggest { margin-top: auto; margin-botto
 /* ---------- dock: push-to-talk + end ---------- */
 .dock { position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
 body[data-layout="vertical"]   .dock { left: 0; right: 0; bottom: 6.5cqh; }
-body[data-layout="horizontal"] .dock { left: 0; width: 56cqw; bottom: 6cqh; }
+body[data-layout="horizontal"] .dock { left: 0; width: 68cqw; bottom: 6cqh; }
+/* narrower side panel (32%): tighter type so it all fits */
+body[data-layout="horizontal"] .side h1 { font-size: 3.1cqh; }
+body[data-layout="horizontal"] .side .intro { font-size: 2.1cqh; }
+body[data-layout="horizontal"] .steps { margin-top: 2.4cqh; gap: 1.1cqh; }
+body[data-layout="horizontal"] .steps li { font-size: 2.05cqh; gap: 1cqw; }
+body[data-layout="horizontal"] .steps b { width: 3.6cqh; height: 3.6cqh; font-size: 1.8cqh; }
+body[data-layout="horizontal"] .suggest { margin-top: 2.6cqh; }
+body[data-layout="horizontal"] .suggest h3 { font-size: 1.7cqh; }
+body[data-layout="horizontal"] .chips { gap: .9cqh; margin-top: 1.1cqh; }
+body[data-layout="horizontal"] .chip { font-size: 1.85cqh; padding: 1cqh 1.5cqh; }
+body[data-layout="horizontal"] .credit { right: auto; width: 68cqw; }
 
 /* ---------- credit line, bottom centre ---------- */
 .credit { position: absolute; left: 0; right: 0; bottom: 1.8cqh; z-index: 4; text-align: center; pointer-events: none;
@@ -278,7 +289,7 @@ body.debug #debug { display: block; }
   </div>
 
   <div class="overlay" id="thanks"><div><h2 data-t="thanks"></h2><p data-t="thanksSub"></p></div></div>
-  <div class="credit">Developed by <img class="credit-logo" src="assets/daitech-fox.png" alt=""><b>DaiTech</b> – CLB AI và Công nghệ Học viện Ngoại giao</div>
+  <div class="credit">Developed by <img class="credit-logo" src="assets/daitech-fox.png" alt=""><b>DaiTech</b> – DAV AI and Technology Club</div>
   <div class="toast" id="toast"></div>
   <div id="corner" aria-hidden="true"></div>
 </div>
@@ -493,6 +504,7 @@ function setCaption(who, text) {
   if (who === 'user') $('capUser').textContent = text ? T().youSaid + text : '';
   else $('capAvatar').textContent = text || '';
 }
+function clearCaptions() { setCaption('user', ''); setCaption('avatar', ''); }
 
 /* ======================= session ======================= */
 let attemptId = 0;
@@ -500,7 +512,7 @@ async function startSession() {
   if (state !== 'idle') return;
   const attempt = ++attemptId;
   setState('connecting');
-  setCaption('user', ''); setCaption('avatar', '');
+  clearCaptions();
   log('start: requesting token', { minutes: cfg.minutes, language: cfg.language, sandbox: SANDBOX });
   clearTimeout(connectTimer);
   connectTimer = setTimeout(() => {
@@ -566,8 +578,9 @@ function wire(s) {
     if (session === s && (state === 'live' || state === 'connecting')) endSession('disconnected');
   });
   s.on(AgentEventsEnum.SESSION_STOPPED, e => {
-    log('session.stopped', e && (e.stop_reason || e.end_reason));
-    if ((e && (e.stop_reason || e.end_reason)) === 'NO_CREDITS') toast(T().errCredits, 'warn', 6000);
+    const why = e && (e.stop_reason || e.end_reason);
+    log('session.stopped', why);
+    if (why === 'NO_CREDITS') toast(T().errCredits, 'warn', 6000);
   });
   s.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
     log('avatar.speak_started');
@@ -626,7 +639,7 @@ async function endSession(reason) {
   detachVideo();
   setState('thanks');
   clearTimeout(thanksTimer);
-  thanksTimer = setTimeout(() => { setCaption('user', ''); setCaption('avatar', ''); setState('idle'); }, THANKS_SECONDS * 1000);
+  thanksTimer = setTimeout(() => { clearCaptions(); setState('idle'); }, THANKS_SECONDS * 1000);
 }
 
 function detachVideo() {
@@ -810,18 +823,18 @@ function closeSetup() { body.classList.remove('setup-open'); if (previewAudio) p
 for (const b of document.querySelectorAll('.lay')) b.addEventListener('click', () => { draft.layout = b.dataset.layout; paintSetup(); });
 for (const b of $('segMinutes').children) b.addEventListener('click', () => { draft.minutes = Number(b.dataset.v); paintSetup(); });
 for (const b of $('segLang').children) b.addEventListener('click', () => { draft.language = b.dataset.v; paintSetup(); });
-$('micBtn').addEventListener('click', async () => {
+/** Opens and closes the mic once, so the browser's permission prompt is out of the way. */
+async function requestMic(okMsg) {
   try {
     const st = await navigator.mediaDevices.getUserMedia({ audio: true });
     st.getTracks().forEach(t => t.stop());
-    toast('Micro OK ✓');
+    if (okMsg) toast(okMsg);
   } catch (e) { toast(T().errMic + ' (' + e.name + ')', 'warn', 6000); }
-});
-$('saveBtn').addEventListener('click', async () => {
+}
+$('micBtn').addEventListener('click', () => requestMic('Micro OK ✓'));
+$('saveBtn').addEventListener('click', () => {
   cfg = { ...draft }; save(cfg); applyConfig(); closeSetup();
-  // Ask for the microphone now, so the first visitor never sees the prompt.
-  try { const st = await navigator.mediaDevices.getUserMedia({ audio: true }); st.getTracks().forEach(t => t.stop()); }
-  catch (e) { toast(T().errMic, 'warn', 6000); }
+  requestMic(); // ask now, so the first visitor never sees the prompt
 });
 
 // Hold the top-left corner for 3 s to open setup on a touch screen.
