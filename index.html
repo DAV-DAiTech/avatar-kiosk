@@ -15,7 +15,7 @@
    DAV avatar kiosk — push-to-talk LiveAvatar session, no iframe.
 
    idle (photo of the avatar, free)  → tap the button → connecting → live
-   live: hold the button to talk, release to send (or tap, talk, tap)
+   live: tap the button and speak, tap again to send; the avatar answers
    ends at the time limit, on "Kết thúc", or when nobody talks for a
    while → thank-you → idle.   Credits are used only while live.
 
@@ -355,7 +355,7 @@ const DEFAULTS = { layout: 'vertical', minutes: 5, language: 'vi', voice: VOICES
 const IDLE_END_SECONDS = 60;      // end early when nobody talks for this long
 const WARN_SECONDS = 30;          // "30 seconds left" notice
 const THANKS_SECONDS = 4;
-const HOLD_MS = 350;              // shorter press = tap-to-toggle instead of hold
+const DOUBLE_TAP_MS = 400;        // ignore a second tap this soon (accidental double tap)
 const MAX_LISTEN_SECONDS = 30;    // stop listening automatically after this
 const CONNECT_TIMEOUT_SECONDS = 45;
 const STORE = 'dav-avatar-kiosk:v3';
@@ -364,13 +364,13 @@ const TEXT = {
   vi: {
     brand1: 'Học viện Ngoại giao', brand2: 'DAV Receptionist · DAV Alumni Day 2026',
     hello: 'Xin chào, tôi là DAV Receptionist', intro: 'Lễ tân AI của Học viện Ngoại giao. Hãy hỏi tôi về sự kiện, Học viện và mạng lưới DAV Alumni.',
-    step1: 'Chạm nút micro để bắt đầu', step2: 'Giữ nút khi bạn nói', step3: 'Thả tay ra, tôi sẽ trả lời',
+    step1: 'Chạm nút micro để bắt đầu', step2: 'Chạm một lần rồi nói câu hỏi', step3: 'Chạm lần nữa, tôi sẽ trả lời ngay',
     youCanAsk: 'Bạn có thể hỏi', end: 'Kết thúc',
     idle: 'Chạm để bắt đầu trò chuyện', idleSub: 'DAV Receptionist luôn sẵn sàng hỗ trợ bạn',
     connecting: 'Đang kết nối…', connectingSub: 'Chờ vài giây nhé',
-    ready: 'Giữ nút để nói', readySub: 'Thả tay ra khi nói xong',
-    holding: 'Đang nghe… thả tay để gửi', toggled: 'Đang nghe… chạm lần nữa để gửi', listeningSub: 'Hãy nói câu hỏi của bạn',
-    thinking: 'Đang suy nghĩ…', speaking: 'Đang trả lời', speakingSub: 'Giữ nút để ngắt lời và hỏi tiếp',
+    ready: 'Chạm để nói', readySub: 'Chạm lần nữa khi nói xong',
+    listening: 'Đang nghe… chạm để gửi', listeningSub: 'Hãy nói câu hỏi của bạn',
+    thinking: 'Đang suy nghĩ…', speaking: 'Đang trả lời', speakingSub: 'Chạm để ngắt lời và hỏi tiếp',
     ending: 'Đang kết thúc…',
     thanks: 'Cảm ơn bạn đã ghé thăm!', thanksSub: 'Chúc bạn một ngày trở về thật ý nghĩa.',
     youSaid: 'Bạn: ',
@@ -389,13 +389,13 @@ const TEXT = {
   en: {
     brand1: 'Diplomatic Academy of Vietnam', brand2: 'DAV Receptionist · DAV Alumni Day 2026',
     hello: 'Hello, I’m the DAV Receptionist', intro: 'The Academy’s AI receptionist. Ask me about the event, the Academy and the DAV Alumni Network.',
-    step1: 'Tap the mic button to start', step2: 'Hold the button while you speak', step3: 'Let go and I’ll answer',
+    step1: 'Tap the mic button to start', step2: 'Tap once and ask your question', step3: 'Tap again and I’ll answer',
     youCanAsk: 'You can ask', end: 'End',
     idle: 'Tap to start talking', idleSub: 'The DAV Receptionist is here to help',
     connecting: 'Connecting…', connectingSub: 'Just a few seconds',
-    ready: 'Hold to talk', readySub: 'Let go when you’re done',
-    holding: 'Listening… let go to send', toggled: 'Listening… tap again to send', listeningSub: 'Ask your question',
-    thinking: 'Thinking…', speaking: 'Answering', speakingSub: 'Hold the button to interrupt',
+    ready: 'Tap to talk', readySub: 'Tap again when you’re done',
+    listening: 'Listening… tap to send', listeningSub: 'Ask your question',
+    thinking: 'Thinking…', speaking: 'Answering', speakingSub: 'Tap to interrupt and ask again',
     ending: 'Ending…',
     thanks: 'Thank you for stopping by!', thanksSub: 'Enjoy your homecoming.',
     youSaid: 'You: ',
@@ -467,7 +467,7 @@ let endsAt = 0, totalMs = 0;
 let lastActivity = 0;
 let warned = false, idleWarned = false;
 let avatarSpeaking = false, thinking = false;
-let ptt = { on: false, mode: null, downAt: 0, chain: Promise.resolve(), timer: 0 };
+let ptt = { on: false, lastTap: 0, chain: Promise.resolve(), timer: 0 };
 let connectTimer = 0, thanksTimer = 0;
 
 function setState(s) {
@@ -483,7 +483,7 @@ function render() {
   if (state === 'connecting') { label = t.connecting; sub = t.connectingSub; }
   else if (state === 'ending' || state === 'thanks') { label = t.ending; sub = ''; }
   else if (state === 'live') {
-    if (ptt.on) { label = ptt.mode === 'toggle' ? t.toggled : t.holding; sub = t.listeningSub; }
+    if (ptt.on) { label = t.listening; sub = t.listeningSub; }
     else if (avatarSpeaking) { label = t.speaking; sub = t.speakingSub; }
     else if (thinking) { label = t.thinking; sub = ''; }
     else { label = t.ready; sub = t.readySub; }
@@ -651,10 +651,10 @@ function detachVideo() {
 }
 
 /* ======================= push to talk ======================= */
-function pttStart(mode) {
+function pttStart() {
   if (state !== 'live' || !session || ptt.on) return;
   const s = session;
-  ptt.on = true; ptt.mode = mode; ptt.downAt = performance.now();
+  ptt.on = true;
   lastActivity = Date.now(); idleWarned = false;
   if (avatarSpeaking) { try { s.interrupt(); } catch (e) { log('interrupt failed', String(e)); } }
   render();
@@ -700,29 +700,22 @@ function pttStop(why) {
 }
 
 function stopListeningUI() {
-  ptt.on = false; ptt.mode = null; clearTimeout(ptt.timer); render();
+  ptt.on = false; clearTimeout(ptt.timer); render();
 }
 
-function pressDown() {
+// One button, tap to toggle: idle → start a session; live → tap to start
+// listening, tap again to send (the avatar answers straight away).
+function tap() {
   if (state === 'idle') { startSession(); return; }
   if (state !== 'live') return;
-  if (ptt.on && ptt.mode === 'toggle') { pttStop('tap'); return; }
-  pttStart('hold');
-}
-function pressUp() {
-  if (state !== 'live' || !ptt.on || ptt.mode !== 'hold') return;
-  if (performance.now() - ptt.downAt < HOLD_MS) { ptt.mode = 'toggle'; render(); }
-  else pttStop('release');
+  const now = performance.now();
+  if (now - ptt.lastTap < DOUBLE_TAP_MS) return;
+  ptt.lastTap = now;
+  if (ptt.on) pttStop('tap'); else pttStart();
 }
 
 const pttBtn = $('ptt');
-pttBtn.addEventListener('pointerdown', e => {
-  e.preventDefault();
-  try { pttBtn.setPointerCapture(e.pointerId); } catch {}
-  pressDown();
-});
-pttBtn.addEventListener('pointerup', pressUp);
-pttBtn.addEventListener('pointercancel', pressUp);
+pttBtn.addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
 pttBtn.addEventListener('contextmenu', e => e.preventDefault());
 $('endBtn').addEventListener('click', () => endSession('end button'));
 
@@ -755,16 +748,12 @@ setInterval(() => {
 }, 250);
 
 /* ======================= keyboard ======================= */
-let spaceDown = false;
 document.addEventListener('keydown', e => {
   if (body.classList.contains('setup-open')) { if (e.key === 'Escape' && saved) closeSetup(); return; }
   if (e.shiftKey && (e.key === 'S' || e.key === 's')) { e.preventDefault(); openSetup(); return; }
   if (e.shiftKey && (e.key === 'D' || e.key === 'd')) { body.classList.toggle('debug'); return; }
-  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (e.repeat || spaceDown) return; spaceDown = true; pressDown(); return; }
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) tap(); return; }
   if (e.key === 'Escape') endSession('esc');
-});
-document.addEventListener('keyup', e => {
-  if (e.key === ' ' || e.key === 'Enter') { spaceDown = false; pressUp(); }
 });
 
 /* ======================= setup screen ======================= */

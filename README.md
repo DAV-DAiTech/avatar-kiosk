@@ -11,7 +11,7 @@ Live: https://dav-daitech.github.io/avatar-kiosk/
 
 1. **Idle:** a still photo of the avatar with a big mic button. Uses no credits.
 2. **Tap the button:** a session starts in about 5–10 s and the avatar greets the visitor.
-3. **Push to talk:** **hold** the button while speaking and **let go** to send. Alternatively, tap once, speak, then tap again. Pressing while the avatar is talking interrupts it. In the horizontal layout, the suggested questions can also be tapped.
+3. **Tap to talk:** tap the button once and speak, then tap it again to send. The avatar answers straight away. Listening stops by itself after 30 s if nobody taps again. Tapping while the avatar is talking interrupts it. In the horizontal layout, the suggested questions can also be tapped.
 4. **End:** the session ends after **5 minutes**, when the visitor taps **Kết thúc**, or after 60 s with nobody talking. A thank-you screen shows, then the idle photo returns.
 
 Credits are used only between steps 2 and 4 (2 credits per minute). LiveAvatar also ends every session itself at the time limit (+20 s), even if the kiosk loses power or network.
@@ -78,7 +78,7 @@ Chrome in kiosk mode, mic allowed without a prompt:
 google-chrome --kiosk --use-fake-ui-for-media-stream --autoplay-policy=no-user-gesture-required "https://dav-daitech.github.io/avatar-kiosk/?layout=vertical"
 ```
 
-On macOS, replace `google-chrome` with `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`. Use a good external mic. Push to talk ignores lobby noise between presses.
+On macOS, replace `google-chrome` with `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`. Use a good external mic. The mic only listens between the two taps, so lobby noise is ignored the rest of the time.
 
 ## Files
 
