@@ -11,7 +11,7 @@ Live: https://dav-daitech.github.io/avatar-kiosk/
 
 The screen is split in half.
 
-- **Left:** the avatar, with three suggested questions beside it. Tapping a question asks it straight away (from the idle screen it starts a session first and cuts the greeting short). After every tap the three questions are replaced by three others.
+- **Left:** the avatar, with the full list of suggested questions beside it (grouped, scrollable by finger or mouse wheel). Tapping a question asks it straight away (from the idle screen it starts a session first and cuts the greeting short); questions already asked in this visit get a ✓.
 - **Right, idle:** the "Gương mặt Alumni", one person at a time: their portrait (cut out of the poster) with name, cohort and titles below, fading from one person to the next.
 - **Right, during a session:** the conversation, one bubble per question and answer. It scrolls (finger or mouse wheel) to reread a long answer.
 
@@ -30,7 +30,7 @@ Everything is in this repository, so it can be edited from anywhere: in a cloud 
 
 | To change | Edit |
 |---|---|
-| The suggested questions | `QUESTIONS` in `index.html` (Vietnamese and English lists, same order). Keep them to things the "DAV" context can answer. |
+| The suggested questions | `QUESTIONS` in `index.html`: groups of questions, Vietnamese and English in the same order. Keep them to things the "DAV" context can answer. |
 | The alumni shown | `assets/alumni/alumni.json`: one entry per person (`img`, `name`, `cohort`, `role`) in each group; portraits are transparent WebP in `assets/alumni/<group>/`. `interval_seconds` sets how long each person stays. To add someone from a new poster, `tools/alumni-extract.swift` cuts the person out and reads the text (see the top of that file). |
 | What the avatar knows and says first | LiveAvatar → Contexts → "DAV". No code change. |
 | Avatar size in the horizontal layout | `--av-h` (height) and `--av-l` (left edge) in `index.html`. |

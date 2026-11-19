@@ -6,7 +6,8 @@
 <title>DAV Receptionist</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- loaded without blocking: a slow or blocked font server must never hold up the kiosk -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <link rel="icon" type="image/png" href="assets/dav-logo.png">
 <link rel="preload" as="image" href="assets/avatar-idle.jpg">
 <link rel="modulepreload" href="vendor/liveavatar-web-sdk-0.0.20.min.js">
@@ -173,13 +174,24 @@ body[data-layout="horizontal"] .dock { left: 16cqw; width: 34cqw; bottom: 5.5cqh
 body[data-layout="horizontal"] #ptt { --ptt: 15cqh; }
 body[data-layout="horizontal"] #endBtn { --ptt-half: 7.5cqh; }
 body[data-layout="horizontal"] #captions { display: none; }
+body[data-layout="horizontal"] .toast { left: 33cqw; max-width: 30cqw; }   /* over the avatar, not across the divide */
 
-/* question chips, left column; refreshed after every tap */
-body[data-layout="horizontal"] .ask { display: flex; flex-direction: column; gap: 1.4cqh; position: absolute; z-index: 4;
-  left: 2.6cqw; width: 14.4cqw; top: 50%; transform: translateY(-56%); }
-.chips { display: flex; flex-direction: column; gap: 1.2cqh; transition: opacity .35s ease, transform .35s ease; }
-.chips.swap { opacity: 0; transform: translateY(1.2cqh); }
-.chip { text-align: left; padding: 1.4cqh 1.6cqh; border-radius: 1.6cqh; font-size: 2cqh; line-height: 1.35;
+/* suggested questions, left column: the whole list, grouped, scrollable (finger or wheel) */
+body[data-layout="horizontal"] .ask { display: flex; flex-direction: column; gap: 1cqh; position: absolute; z-index: 4;
+  left: 2.4cqw; width: 14.8cqw; top: 5cqh; bottom: 4.5cqh; }
+.chips { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .75cqh; padding: .6cqh .7cqw 3cqh 0;
+  overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.3) transparent; }
+.chips.more-above { --fade: linear-gradient(to bottom, transparent 0, #000 7%); }
+.chips.more-below { --fade: linear-gradient(to top, transparent 0, #000 9%); }
+.chips.more-above.more-below { --fade: linear-gradient(to bottom, transparent 0, #000 7%, #000 91%, transparent 100%); }
+.chips.more-above, .chips.more-below { -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+.chip-group { flex: none; margin-top: 1.2cqh; font-size: 1.55cqh; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: rgba(244,246,251,.62); }
+.chip-group:first-child { margin-top: 0; }
+.chip.asked { opacity: .55; border-color: rgba(226,180,75,.45); }
+.chip.asked::before { content: '✓ '; color: var(--accent); font-weight: 700; }
+.chip { flex: none; text-align: left; padding: 1.05cqh 1.35cqh; border-radius: 1.4cqh; font-size: 1.9cqh; line-height: 1.32;
   background: rgba(11,23,48,.74); border: 1px solid rgba(255,255,255,.16); backdrop-filter: blur(8px);
   box-shadow: 0 .8cqh 2.4cqh rgba(0,0,0,.28); transition: background .2s, border-color .2s, transform .12s, opacity .2s; }
 .chip:active { transform: scale(.97); background: rgba(29,51,99,.92); border-color: var(--accent); }
@@ -310,8 +322,8 @@ body.debug #debug { display: block; }
   <!-- horizontal only: question chips (left column) -->
   <div class="ask">
     <div class="kicker" data-t="youCanAsk"></div>
-    <div class="chips" id="chips"></div>
     <p class="ask-hint" data-t="askHint"></p>
+    <div class="chips" id="chips"></div>
   </div>
 
   <!-- horizontal only: right half -->
@@ -461,46 +473,85 @@ const TEXT = {
   },
 };
 
-// Question chips (horizontal layout). Three are shown at a time and replaced
-// after every tap. The two lists are parallel: item n is the same question.
-// Keep them to things the "DAV" context in LiveAvatar can answer.
+// Suggested questions (horizontal layout), all shown in a scrollable column,
+// grouped. The vi and en lists are parallel. Keep them to things the "DAV"
+// context in LiveAvatar can answer.
 const QUESTIONS = {
   vi: [
-    'DAV Alumni Day 2026 có những hoạt động gì?',
-    'Ngày hội chính diễn ra khi nào, ở đâu?',
-    'Chương trình sáng ngày 22/11 gồm những phần nào?',
-    'Mấy giờ bắt đầu check-in?',
-    'Ai biểu diễn văn nghệ chào mừng?',
-    'Phần hội có những hoạt động gì?',
-    'Có tour tham quan Học viện không?',
-    'Làm sao để tham gia mạng lưới DAV Alumni?',
-    'Tôi có thể liên hệ DAV Alumni bằng cách nào?',
-    'Học viện Ngoại giao được thành lập khi nào?',
-    'Sứ mạng của Học viện Ngoại giao là gì?',
-    'Giá trị cốt lõi của Học viện là gì?',
-    'Giám đốc Học viện Ngoại giao là ai?',
-    'Kể cho tôi về một cựu sinh viên tiêu biểu.',
-    'DAV Alumni Network bảo vệ dữ liệu cá nhân thế nào?',
+    { title: 'Sự kiện', items: [
+      'DAV Alumni Day 2026 có những hoạt động gì?',
+      'Ngày hội chính diễn ra khi nào, ở đâu?',
+      'Hoạt động chào đón Alumni ngày 20–21/11 gồm những gì?',
+      'Chương trình sáng ngày 22/11 gồm những phần nào?',
+      'Mấy giờ bắt đầu check-in?',
+      'Ai biểu diễn văn nghệ chào mừng?',
+      'Những ai sẽ phát biểu tại buổi lễ?',
+      'Phần hội có những hoạt động gì?',
+      'Có tour tham quan Học viện không?',
+      'Có tiệc nhẹ và giao lưu không, vào lúc nào?',
+      'Triển lãm được tổ chức ở đâu?',
+      'Ai được mời tham dự chương trình?',
+      'Lớp tôi có thể đăng ký phòng họp lớp không?',
+    ] },
+    { title: 'Mạng lưới Alumni', items: [
+      'Làm sao để tham gia mạng lưới DAV Alumni?',
+      'Tôi có thể liên hệ DAV Alumni bằng cách nào?',
+      'Mạng lưới DAV Alumni có website không?',
+      'DAV Alumni Network bảo vệ dữ liệu cá nhân thế nào?',
+    ] },
+    { title: 'Học viện Ngoại giao', items: [
+      'Học viện Ngoại giao được thành lập khi nào?',
+      'Sứ mạng của Học viện Ngoại giao là gì?',
+      'Tầm nhìn của Học viện là gì?',
+      'Giá trị cốt lõi của Học viện là gì?',
+      'Khẩu hiệu hành động của Học viện là gì?',
+      'Triết lý giáo dục của Học viện là gì?',
+      'Giám đốc Học viện Ngoại giao là ai?',
+    ] },
+    { title: 'Cựu sinh viên tiêu biểu', items: [
+      'Kể cho tôi về một cựu sinh viên tiêu biểu.',
+      'Kể về Đại sứ Nguyễn Thị Bích Huệ.',
+      'Kể về Đại sứ, GS.TS. Nguyễn Vũ Tùng.',
+    ] },
   ],
   en: [
-    'What happens at DAV Alumni Day 2026?',
-    'When and where is the main day?',
-    'What is on the programme on the morning of 22 November?',
-    'What time does check-in start?',
-    'Who performs at the opening?',
-    'What is there to do after the ceremony?',
-    'Is there a tour of the Academy?',
-    'How can I join the DAV Alumni Network?',
-    'How can I contact DAV Alumni?',
-    'When was the Diplomatic Academy founded?',
-    'What is the Academy’s mission?',
-    'What are the Academy’s core values?',
-    'Who is the Director of the Academy?',
-    'Tell me about a notable alumnus.',
-    'How does the DAV Alumni Network protect personal data?',
+    { title: 'The event', items: [
+      'What happens at DAV Alumni Day 2026?',
+      'When and where is the main day?',
+      'What happens on 20–21 November to welcome alumni?',
+      'What is on the programme on the morning of 22 November?',
+      'What time does check-in start?',
+      'Who performs at the opening?',
+      'Who will speak at the ceremony?',
+      'What is there to do after the ceremony?',
+      'Is there a tour of the Academy?',
+      'Is there a reception for networking, and when?',
+      'Where is the exhibition?',
+      'Who is invited?',
+      'Can my class book a room for a reunion?',
+    ] },
+    { title: 'Alumni Network', items: [
+      'How can I join the DAV Alumni Network?',
+      'How can I contact DAV Alumni?',
+      'Does the DAV Alumni Network have a website?',
+      'How does the DAV Alumni Network protect personal data?',
+    ] },
+    { title: 'The Academy', items: [
+      'When was the Diplomatic Academy founded?',
+      'What is the Academy’s mission?',
+      'What is the Academy’s vision?',
+      'What are the Academy’s core values?',
+      'What is the Academy’s motto?',
+      'What is the Academy’s educational philosophy?',
+      'Who is the Director of the Academy?',
+    ] },
+    { title: 'Notable alumni', items: [
+      'Tell me about a notable alumnus.',
+      'Tell me about Ambassador Nguyễn Thị Bích Huệ.',
+      'Tell me about Ambassador Nguyễn Vũ Tùng.',
+    ] },
   ],
 };
-const CHIP_COUNT = 3;
 
 /* ======================= settings ======================= */
 const params = new URLSearchParams(location.search);
@@ -531,7 +582,7 @@ function applyConfig() {
   body.dataset.layout = cfg.layout;
   document.documentElement.lang = cfg.language === 'en' ? 'en' : 'vi';
   for (const el of document.querySelectorAll('[data-t]')) el.textContent = T()[el.dataset.t];
-  refreshChips(false, false);
+  renderChips();
   if (show.seq.length && show.i >= 0) setShowTitle(show.seq[show.i].g);
   render();
 }
@@ -656,7 +707,7 @@ function chatInterrupt() {
   if (chat.drainBubble) chatSet(chat.drainBubble, chat.botText.trim() + '…');
   chat.botOpen = false; chat.draining = true;
   clearTimeout(chat.drainTimer);
-  chat.drainTimer = setTimeout(() => { chat.draining = false; chat.drainBubble = null; }, 4000);   // in case no transcript comes
+  chat.drainTimer = setTimeout(() => { chat.draining = false; chat.drainBubble = null; }, 8000);   // in case no transcript comes (slow servers take ~6 s)
 }
 function botChunk(t) {                       // part of the reply being generated
   if (chat.draining) return;
@@ -691,35 +742,32 @@ $('chat').addEventListener('scroll', () => {
 }, { passive: true });
 
 /* ======================= question chips (horizontal) ======================= */
-let deck = [], shownQs = [];
+// Every question is listed; one already asked this session gets a tick.
 const lang = () => (cfg.language === 'en' ? 'en' : 'vi');
-function drawQuestions(exclude) {
-  const out = [];
-  for (let guard = 0; out.length < CHIP_COUNT && guard < 100; guard++) {
-    if (!deck.length) deck = [...QUESTIONS.vi.keys()].sort(() => Math.random() - .5);
-    const i = deck.shift();
-    if (!out.includes(i) && !exclude.includes(i)) out.push(i);
-  }
-  return out;
-}
-// newSet: pick different questions (after a tap); animate: fade the swap
-function refreshChips(newSet = true, animate = true) {
-  const box = $('chips');
-  const fill = () => {
-    if (newSet || !shownQs.length) shownQs = drawQuestions(shownQs);
-    box.innerHTML = '';
-    for (const i of shownQs) {
-      const q = QUESTIONS[lang()][i];
+const asked = new Set();                     // "group.item" keys
+function renderChips() {
+  const box = $('chips'); box.innerHTML = '';
+  QUESTIONS[lang()].forEach((g, gi) => {
+    const h = document.createElement('div'); h.className = 'chip-group'; h.textContent = g.title;
+    box.appendChild(h);
+    g.items.forEach((q, qi) => {
       const b = document.createElement('button'); b.className = 'chip'; b.textContent = q;
-      b.addEventListener('click', () => askText(q));
+      b.dataset.k = gi + '.' + qi;
+      b.classList.toggle('asked', asked.has(b.dataset.k));
+      b.addEventListener('click', () => { if (askText(q)) { asked.add(b.dataset.k); b.classList.add('asked'); } });
       box.appendChild(b);
-    }
-    box.classList.remove('swap');
-  };
-  if (!animate) return fill();
-  box.classList.add('swap');
-  setTimeout(fill, 350);
+    });
+  });
+  scrollFade(box);
 }
+function clearAsked() { asked.clear(); for (const b of $('chips').querySelectorAll('.chip.asked')) b.classList.remove('asked'); }
+// Fade the top/bottom edge of a scroll box while there is more beyond it.
+function scrollFade(box) {
+  box.classList.toggle('more-above', box.scrollTop > 2);
+  box.classList.toggle('more-below', box.scrollHeight - box.scrollTop - box.clientHeight > 2);
+}
+$('chips').addEventListener('scroll', () => scrollFade($('chips')), { passive: true });
+window.addEventListener('resize', () => scrollFade($('chips')));
 
 /* ======================= alumni posters (horizontal, idle) ======================= */
 // People and group titles come from assets/alumni/alumni.json; each group is
@@ -896,7 +944,7 @@ async function endSession(reason) {
   detachVideo();
   setState('thanks');
   clearTimeout(thanksTimer);
-  thanksTimer = setTimeout(() => { clearCaptions(); setState('idle'); }, THANKS_SECONDS * 1000);
+  thanksTimer = setTimeout(() => { clearCaptions(); clearAsked(); setState('idle'); }, THANKS_SECONDS * 1000);
 }
 
 function detachVideo() {
@@ -984,9 +1032,9 @@ $('endBtn').addEventListener('click', () => endSession('end button'));
 // (cutting its greeting short).
 let pendingQuestion = null;
 function askText(q) {
-  if (ptt.on) return;                                   // finish the voice question first
-  if (state === 'idle') { pendingQuestion = q; startSession(); refreshChips(); return; }
-  if (state !== 'live' || !session) return;
+  if (ptt.on) return false;                             // finish the voice question first
+  if (state === 'idle') { pendingQuestion = q; startSession(); return true; }
+  if (state !== 'live' || !session) return false;
   try {
     if (avatarSpeaking) session.interrupt();
     if (avatarSpeaking || chat.botOpen) chatInterrupt();
@@ -995,8 +1043,8 @@ function askText(q) {
     thinking = true; lastActivity = Date.now(); render();
     log('asked:', q);
     setTimeout(() => { if (thinking && !avatarSpeaking) { thinking = false; render(); } }, 15000);
-  } catch (e) { log('message failed', String(e)); }
-  refreshChips();
+    return true;
+  } catch (e) { log('message failed', String(e)); return false; }
 }
 // Wait (briefly) for the greeting to begin so the interrupt has something to cut.
 async function askWhenReady(s, q) {
