@@ -12,7 +12,7 @@ Live: https://dav-daitech.github.io/avatar-kiosk/
 The screen is split in half.
 
 - **Left:** the avatar, with three suggested questions beside it. Tapping a question asks it straight away (from the idle screen it starts a session first and cuts the greeting short). After every tap the three questions are replaced by three others.
-- **Right, idle:** the "Gương mặt Alumni" posters, one at a time, fading from one to the next. The blurred poster also tints the whole half behind it.
+- **Right, idle:** the "Gương mặt Alumni", one person at a time: their portrait (cut out of the poster) with name, cohort and titles below, fading from one person to the next.
 - **Right, during a session:** the conversation, one bubble per question and answer. It scrolls (finger or mouse wheel) to reread a long answer.
 
 ## How a visit works
@@ -31,7 +31,7 @@ Everything is in this repository, so it can be edited from anywhere: in a cloud 
 | To change | Edit |
 |---|---|
 | The suggested questions | `QUESTIONS` in `index.html` (Vietnamese and English lists, same order). Keep them to things the "DAV" context can answer. |
-| The alumni posters | Add or remove images in `assets/alumni/<group>/` and list them in `assets/alumni/alumni.json`. Square images, about 1200 px, WebP or JPEG. `interval_seconds` sets how long each poster stays. |
+| The alumni shown | `assets/alumni/alumni.json`: one entry per person (`img`, `name`, `cohort`, `role`) in each group; portraits are transparent WebP in `assets/alumni/<group>/`. `interval_seconds` sets how long each person stays. To add someone from a new poster, `tools/alumni-extract.swift` cuts the person out and reads the text (see the top of that file). |
 | What the avatar knows and says first | LiveAvatar → Contexts → "DAV". No code change. |
 | Avatar size in the horizontal layout | `--av-h` (height) and `--av-l` (left edge) in `index.html`. |
 
@@ -107,7 +107,8 @@ On macOS, replace `google-chrome` with `"/Applications/Google Chrome.app/Content
 |---|---|
 | `index.html` | The kiosk page |
 | `assets/avatar-idle.jpg` | Idle photo (same framing as the live video) |
-| `assets/alumni/` | Alumni posters for the horizontal layout, and `alumni.json` listing them |
+| `assets/alumni/` | Alumni portraits for the horizontal layout, and `alumni.json` with their names, cohorts and titles |
+| `tools/alumni-extract.swift` | Cuts a person out of an alumni poster and reads its text (macOS) |
 | `tools/voice-test.mjs` | End-to-end voice test with a fake microphone |
 | `vendor/` | LiveAvatar Web SDK, bundled (see `vendor/README.md`) |
 | `server/` | Token server: `api/session.js`, `api/status.js`, `api/voice-preview.js`, `dev.mjs` for local use |

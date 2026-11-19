@@ -6,34 +6,169 @@
       "title_vi": "Gương mặt Alumni · Đối ngoại, ngoại giao",
       "title_en": "Alumni faces · Diplomacy and foreign affairs",
       "dir": "assets/alumni/ngoai-giao/",
-      "files": [
-        "01.webp",
-        "02.webp",
-        "03.webp",
-        "04.webp",
-        "05.webp",
-        "06.webp",
-        "07.webp",
-        "08.webp",
-        "09.webp",
-        "10.webp",
-        "11.webp",
-        "12.webp",
-        "13.webp",
-        "14.webp",
-        "15.webp",
-        "16.webp",
-        "17.webp",
-        "18.webp",
-        "19.webp",
-        "20.webp",
-        "21.webp",
-        "22.webp",
-        "23.webp",
-        "24.webp",
-        "25.webp",
-        "26.webp",
-        "27.webp"
+      "people": [
+        {
+          "img": "01.webp",
+          "name": "TS. ĐS. Lê Hoài Trung",
+          "role": "ỦY VIÊN BỘ CHÍNH TRỊ, BỘ TRƯỞNG BỘ NGOẠI GIAO, ĐẠI BIỂU QUỐC HỘI KHOÁ XV, XVI, BÍ THƯ TRUNG ƯƠNG ĐẢNG KHÓA XIII, NGUYÊN CHÁNH VĂN PHÒNG TRUNG ƯƠNG ĐẢNG, NGUYÊN TRƯỞNG BAN ĐỐI NGOẠI TRUNG ƯƠNG, NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC",
+          "cohort": "Cựu sinh viên Khóa 12"
+        },
+        {
+          "img": "02.webp",
+          "name": "ĐS. Phạm Bình Minh",
+          "role": "NGUYÊN UỶ VIÊN BỘ CHÍNH TRỊ, NGUYÊN PHÓ THỦ TƯỚNG THƯỜNG TRỰC CHÍNH PHỦ, NGUYÊN BỘ TRƯỞNG BỘ NGOẠI GIAO, ĐẠI BIỂU QUỐC HỘI KHOÁ XIII, XIV, XV, NGUYÊN ĐẠI SỨ, PHÓ TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC",
+          "cohort": "Cựu sinh viên Khóa 11"
+        },
+        {
+          "img": "03.webp",
+          "name": "TS. Trần Tuấn Anh",
+          "role": "NGUYÊN ỦY VIÊN BỘ CHÍNH TRỊ, NGUYÊN TRƯỞNG BAN KINH TẾ TRUNG ƯƠNG, NGUYÊN BỘ TRƯỞNG BỘ CÔNG THƯƠNG, ĐẠI BIỂU QUỐC HỘI KHOÁ XIV, XV, NGUYÊN TỔNG LÃNH SỰ VIỆT NAM TẠI SAN FRANCISCO, HOA KỲ",
+          "cohort": "Cựu sinh viên Khóa 17"
+        },
+        {
+          "img": "04.webp",
+          "name": "ĐS. Bùi Thanh Sơn",
+          "role": "NGUYÊN ỦY VIÊN TRUNG ƯƠNG ĐẢNG, NGUYÊN PHÓ THỦ TƯỚNG CHÍNH PHỦ, NGUYÊN BỘ TRƯỞNG BỘ NGOẠI GIAO, ĐẠI BIỂU QUỐC HỘI KHOÁ XIV, XV",
+          "cohort": "Cựu sinh viên Khóa 14"
+        },
+        {
+          "img": "05.webp",
+          "name": "Ông Đào Việt Trung",
+          "role": "NGUYÊN ỦY VIÊN TRUNG ƯƠNG ĐẢNG, NGUYÊN CHỦ NHIỆM VĂN PHÒNG CHỦ TỊCH NƯỚC, ĐẠI BIỂU QUỐC HỘI KHOÁ XIII, XIV NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 11"
+        },
+        {
+          "img": "06.webp",
+          "name": "TS. ĐS. Nguyễn Minh Vũ",
+          "role": "ỦY VIÊN TRUNG ƯƠNG ĐẢNG, THỨ TRƯỞNG THƯỜNG TRỰC BỘ NGOẠI GIAO, NGUYÊN CHỦ TỊCH ỦY BAN QUỐC GIA UNESCO VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa 20"
+        },
+        {
+          "img": "07.webp",
+          "name": "PGS.TS. Lê Hải Bình",
+          "role": "UỶ VIÊN TRUNG ƯƠNG ĐẢNG, PHÓ GIÁM ĐỐC TT HỌC VIỆN CTQG HỒ CHÍ MINH, NGUYÊN TỔNG BIÊN TẬP TẠP CHÍ CỘNG SẢN, NGUYÊN PHÓ TRƯỞNG BAN TUYÊN GIÁO TRUNG ƯƠNG, NGUYÊN THỨ TRƯỞNG TT BỘ VĂN HÓA, THỂ THAO VÀ DU LỊCH, NGUYÊN PHÓ GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 22"
+        },
+        {
+          "img": "08.webp",
+          "name": "ĐS. Nguyễn Quốc Dũng",
+          "role": "THỨ TRƯỞNG BỘ NGOẠI GIAO, ĐẠI SỨ VIỆT NAM TẠI HOA KỲ, NGUYÊN TRƯỞNG SOM ASEAN VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa 16"
+        },
+        {
+          "img": "09.webp",
+          "name": "ĐS. Đặng Hoàng Giang",
+          "role": "THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC, NGUYÊN CHỦ TỊCH ỦY BAN QUỐC GIA UNESCO VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa 21"
+        },
+        {
+          "img": "10.webp",
+          "name": "Ông Ngô Lê Văn",
+          "role": "THỨ TRƯỞNG BỘ NGOẠI GIAO, CHỦ TỊCH ỦY BAN QUỐC GIA UNESCO VIỆT NAM, NGUYÊN PHÓ TRƯỞNG BAN ĐỐI NGOẠI TRUNG ƯƠNG",
+          "cohort": "Cựu sinh viên Khóa 20"
+        },
+        {
+          "img": "11.webp",
+          "name": "ĐS. Đỗ Hùng Việt",
+          "role": "THỨ TRƯỞNG BỘ NGOẠI GIAO, ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC",
+          "cohort": "Cựu sinh viên Khóa 23"
+        },
+        {
+          "img": "12.webp",
+          "name": "ĐS. Nguyễn Minh Hằng",
+          "role": "THỨ TRƯỞNG BỘ NGOẠI GIAO, ỦY VIÊN BAN CHẤP HÀNH TRUNG ƯƠNG HỘI LIÊN HIỆP PHỤ NỮ VIỆT NAM KHÓA XIV, PHÓ TRƯỞNG ĐOÀN ĐÀM PHÁN CHÍNH PHỦ VỀ KINH TẾ VÀ THƯƠNG MẠI QUỐC TẾ, NGUYÊN TRƯỞNG SOM ASEM CỦA VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa 21"
+        },
+        {
+          "img": "13.webp",
+          "name": "TS. Phan Anh Sơn",
+          "role": "CHỦ TỊCH LIÊN HIỆP CÁC TỔ CHỨC HỮU NGHỊ VIỆT NAM, ĐẠI BIỂU QUỐC HỘI KHOÁ XVI, ỦY VIÊN ĐOÀN CHỦ TỊCH ỦY BAN TRUNG ƯƠNG MẶT TRẬN TỔ QUỐC VIỆT NAM",
+          "cohort": "Cựu Nghiên cứu sinh Khóa 4"
+        },
+        {
+          "img": "14.webp",
+          "name": "PGS.TS. Nguyễn Mạnh Hùng",
+          "role": "PHÓ GIÁM ĐỐC HỌC VIỆN CHÍNH TRỊ QUỐC GIA HỒ CHÍ MINH, PHÓ CHỦ TỊCH HỘI ĐỒNG LÝ LUẬN TRUNG ƯƠNG",
+          "cohort": "Cựu sinh viên Khóa 22"
+        },
+        {
+          "img": "15.webp",
+          "name": "ĐS. Lê Công Phụng",
+          "role": "NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI HOA KỲ, NGUYÊN TRƯỞNG ĐOÀN ĐÀM PHÁN CHÍNH PHỦ VỀ BIÊN GIỚI, LÃNH THỔ",
+          "cohort": "Cựu sinh viên Khóa Phiên dịch 1"
+        },
+        {
+          "img": "16.webp",
+          "name": "ĐS. Nguyễn Quốc Cường",
+          "role": "NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI HOA KỲ & NHẬT BẢN",
+          "cohort": "Cựu sinh viên Khóa 11"
+        },
+        {
+          "img": "17.webp",
+          "name": "ĐS. Lê Lương Minh",
+          "role": "NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN TỔNG THƯ KÝ ASEAN, NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC",
+          "cohort": "Cựu sinh viên Khóa Phiên dịch 2"
+        },
+        {
+          "img": "18.webp",
+          "name": "ĐS. Phạm Quang Vinh",
+          "role": "NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI HOA KỲ, NGUYÊN TRƯỞNG SOM ASEAN VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa 10"
+        },
+        {
+          "img": "19.webp",
+          "name": "ĐS. Hà Kim Ngọc",
+          "role": "NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI HOA KỲ, NGUYÊN CHỦ TỊCH ỦY BAN QUỐC GIA UNESCO VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa 15"
+        },
+        {
+          "img": "20.webp",
+          "name": "PGS.TS. ĐS. Đặng Đình Quý",
+          "role": "NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC, NGUYÊN GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 18"
+        },
+        {
+          "img": "21.webp",
+          "name": "ĐS. Nguyễn Bá Hùng",
+          "role": "NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI LÀO, NGUYÊN TỔNG LÃNH SỰ VIỆT NAM TẠI SAN FRANCISCO, HOA KỲ",
+          "cohort": "Cựu sinh viên Khóa 14"
+        },
+        {
+          "img": "22.webp",
+          "name": "ĐS. Nguyễn Mạnh Dũng",
+          "role": "NGUYÊN TRỢ LÝ BỘ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI Ý, PHÁP & BỈ, NGUYÊN TRƯỞNG PHÁI ĐOÀN VIỆT NAM TẠI EU",
+          "cohort": "Cựu sinh viên Khóa Phiên dịch 1"
+        },
+        {
+          "img": "23.webp",
+          "name": "ĐS. Lê Kinh Tài",
+          "role": "NGUYÊN TRỢ LÝ BỘ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI PHÁP & ĐỨC, NGUYÊN CHỦ TỊCH ỦY BAN QUỐC GIA UNESCO VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa Phiên dịch 2"
+        },
+        {
+          "img": "24.webp",
+          "name": "ĐS. Nguyễn Trung Thành",
+          "role": "NGUYÊN TRỢ LÝ BỘ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN TRƯỞNG SOM ASEAN VIỆT NAM, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI SINGAPORE & CUBA, NGUYÊN TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC VÀ CÁC TỔ CHỨC QUỐC TẾ KHÁC TẠI GENEVA, THỤY SĨ",
+          "cohort": "Cựu sinh viên Khóa 11"
+        },
+        {
+          "img": "25.webp",
+          "name": "ĐS. Nguyễn Ngọc Sơn",
+          "role": "NGUYÊN TRỢ LÝ BỘ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI PHÁP, CHILE & THỤY SỸ",
+          "cohort": "Cựu sinh viên Khóa 12"
+        },
+        {
+          "img": "26.webp",
+          "name": "ĐS. Phạm Sanh Châu",
+          "role": "NGUYÊN TRỢ LÝ BỘ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI ẤN ĐỘ, NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN VIỆT NAM TẠI UNESCO",
+          "cohort": "Cựu sinh viên Khóa 13"
+        },
+        {
+          "img": "27.webp",
+          "name": "ĐS. Phạm Sao Mai",
+          "role": "NGUYÊN TRỢ LÝ BỘ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI TRUNG QUỐC",
+          "cohort": "Cựu sinh viên Khóa 14"
+        }
       ]
     },
     {
@@ -41,22 +176,97 @@
       "title_vi": "Gương mặt Alumni · Tổ chức quốc tế",
       "title_en": "Alumni faces · International organisations",
       "dir": "assets/alumni/to-chuc-quoc-te/",
-      "files": [
-        "01.webp",
-        "02.webp",
-        "03.webp",
-        "04.webp",
-        "05.webp",
-        "06.webp",
-        "07.webp",
-        "08.webp",
-        "09.webp",
-        "10.webp",
-        "11.webp",
-        "12.webp",
-        "13.webp",
-        "14.webp",
-        "15.webp"
+      "people": [
+        {
+          "img": "01.webp",
+          "name": "Ông Lê Lương Minh",
+          "role": "NGUYÊN TỔNG THƯ KÝ ASEAN, NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC, NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa Phiên dịch 2"
+        },
+        {
+          "img": "02.webp",
+          "name": "PGS.TS. Dương Văn Quảng",
+          "role": "NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN VIỆT NAM TẠI UNESCO, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI SINGAPORE, NGUYÊN GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa Phiên dịch 2"
+        },
+        {
+          "img": "03.webp",
+          "name": "PGS.TS. Đặng Đình Quý",
+          "role": "NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC, NGUYÊN THỨ TRƯỞNG BỘ NGOẠI GIAO, NGUYÊN GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 18"
+        },
+        {
+          "img": "04.webp",
+          "name": "Ông Đỗ Hùng Việt",
+          "role": "ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC, THỨ TRƯỞNG BỘ NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 23"
+        },
+        {
+          "img": "05.webp",
+          "name": "PGS.TS. Hoàng Anh Tuấn",
+          "role": "NGUYÊN PHÓ TỔNG THƯ KÝ ASEAN, NGUYÊN ĐẠI SỨ VIỆT NAM TẠI INDONESIA, NGUYÊN PHÓ GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 18"
+        },
+        {
+          "img": "06.webp",
+          "name": "TS. Phạm Lan Dung",
+          "role": "CHỦ TỊCH HỘI LUẬT QUỐC TẾ CHÂU Á (ASIANSIL) NHIỆM KỲ 2023 - 2025, NGUYÊN Q. GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu học viên Tiến sĩ Khóa 1"
+        },
+        {
+          "img": "07.webp",
+          "name": "PGS.TS. Nguyễn Thị Lan Anh",
+          "role": "THẨM PHÁN TÒA ÁN LUẬT BIỂN QUỐC TẾ (ITLOS) NHIỆM KỲ 2026-2035, NGUYÊN PHÓ GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 22"
+        },
+        {
+          "img": "08.webp",
+          "name": "Bà Trần Thị Hoàng Mai",
+          "role": "ĐẠI DIỆN CỦA TỐ CHỨC QUỐC TẾ PHÁP NGỮ (OIF) TẠI TÂY PHI, NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN VIỆT NAM TẠI UNESCO",
+          "cohort": "Cựu sinh viên Khóa 17"
+        },
+        {
+          "img": "09.webp",
+          "name": "Ông Vũ Tú Thành",
+          "role": "QUYỀN GIÁM ĐỐC ĐIỀU HÀNH KHU VỰC ASEAN KIÊM TRƯỞNG ĐẠI DIỆN TẠI VIỆT NAM CỦA HỘI ĐỒNG KINH DOANH HOA KỲ - ASEAN",
+          "cohort": "Cựu sinh viên Khóa 21"
+        },
+        {
+          "img": "10.webp",
+          "name": "Bà Nguyễn Thị Minh Lý",
+          "role": "TRƯỞNG NHÓM, TRUNG TÂM DỊCH VỤ TOÀN CẦU, VỤ CHUỖI CUNG ỨNG VÀ TRUNG TÂM DỊCH VỤ, TỔ CHỨC Y TẾ THẾ GIỚI (WHO)",
+          "cohort": "Cựu sinh viên Khóa 22"
+        },
+        {
+          "img": "11.webp",
+          "name": "Bà Nguyễn Nguyệt Minh",
+          "role": "PHỤ TRÁCH VĂN PHÒNG QUỐC GIA CƠ QUAN PHÒNG, CHỐNG MA TÚY VÀ TỘI PHẠM LIÊN HỢP QUỐC",
+          "cohort": "Cựu sinh viên Khóa 22"
+        },
+        {
+          "img": "12.webp",
+          "name": "Bà Phạm Thị Thanh Hường",
+          "role": "TRƯỞNG BAN VĂN HÓA, VĂN PHÒNG UNESCO VIỆT NAM",
+          "cohort": "Cựu sinh viên Khóa 25"
+        },
+        {
+          "img": "13.webp",
+          "name": "Ông Phan Duy Hảo",
+          "role": "CÁN BỘ PHÁP LÝ, TÒA ÁN QUỐC TẾ VỀ LUẬT BIỂN (ITLOS), NGUYÊN PHÓ VỤ TRƯỞNG, ỦY BAN BIÊN GIỚI QUỐC GIA, BỘ NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 26"
+        },
+        {
+          "img": "14.webp",
+          "name": "Ông Đặng Hoàng Giang",
+          "role": "NGUYÊN ĐẠI SỨ, TRƯỞNG PHÁI ĐOÀN ĐẠI DIỆN THƯỜNG TRỰC VIỆT NAM TẠI LIÊN HỢP QUỐC, THỨ TRƯỞNG BỘ NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 21"
+        },
+        {
+          "img": "15.webp",
+          "name": "ĐS, GS.TS. Nguyễn Thái Yên Hương",
+          "role": "NGUYÊN ĐẠI DIỆN VIỆT NAM TẠI UỶ BAN NHÂN QUYỀN LIÊN CHÍNH PHỦ ASEAN (AICHR), NGUYÊN CHỦ TỊCH HỘI ĐỒNG AN NINH CHÂU Á-THÁI BÌNH DƯƠNG (CSCAP), NGUYÊN PHÓ GIÁM ĐỐC HỌC VIỆN NGOẠI GIAO",
+          "cohort": "Cựu sinh viên Khóa 14"
+        }
       ]
     }
   ]
