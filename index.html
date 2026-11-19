@@ -58,7 +58,17 @@ body.fill #stage { width: 100vw; height: 100vh; }
 #avatar { position: absolute; inset: 0; overflow: hidden; background: #0d1a33; }
 body[data-layout="horizontal"] #avatar { right: auto; width: 68cqw; }
 /* horizontal: the portrait video is cropped to a near-square panel; drop the crop a little so the face sits in the upper half, clear of the button */
-body[data-layout="horizontal"] #avatar img, body[data-layout="horizontal"] #avatar video { object-position: 50% 32%; }
+/* horizontal: the 9:16 video is shown smaller than the panel (--av-h = its height) and centred,
+   with a dark blurred copy of the same scene filling the strips either side */
+body[data-layout="horizontal"] #avatar { --av-h: 135cqh; }
+body[data-layout="horizontal"] #avatar::before { content: ''; position: absolute; inset: -6cqh;
+  background: url('assets/avatar-idle.jpg') 50% 35% / cover; filter: blur(3cqh) brightness(.5) saturate(1.1); }
+body[data-layout="horizontal"] #avatar img, body[data-layout="horizontal"] #avatar video {
+  inset: auto; height: var(--av-h); width: calc(var(--av-h) * 9 / 16);
+  left: calc(50% - var(--av-h) * 9 / 32); top: calc(30cqh - var(--av-h) * .33);
+  object-position: 50% 0%;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%); }
 #avatar img, #avatar video {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; object-position: 50% 0%;
