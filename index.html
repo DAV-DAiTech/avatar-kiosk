@@ -54,21 +54,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 body.fill #stage { width: 100vw; height: 100vh; }
 
-/* ---------- avatar: full stage (vertical) or left 56% (horizontal, half body) ---------- */
+/* ---------- avatar: full stage (vertical) or left half (horizontal) ---------- */
 #avatar { position: absolute; inset: 0; overflow: hidden; background: #0d1a33; }
-body[data-layout="horizontal"] #avatar { right: auto; width: 68cqw; }
-/* horizontal: the portrait video is cropped to a near-square panel; drop the crop a little so the face sits in the upper half, clear of the button */
-/* horizontal: the 9:16 video is shown smaller than the panel (--av-h = its height) and centred,
-   with a dark blurred copy of the same scene filling the strips either side */
-body[data-layout="horizontal"] #avatar { --av-h: 135cqh; }
-body[data-layout="horizontal"] #avatar::before { content: ''; position: absolute; inset: -6cqh;
-  background: url('assets/avatar-idle.jpg') 50% 35% / cover; filter: blur(3cqh) brightness(.5) saturate(1.1); }
-body[data-layout="horizontal"] #avatar img, body[data-layout="horizontal"] #avatar video {
-  inset: auto; height: var(--av-h); width: calc(var(--av-h) * 9 / 16);
-  left: calc(50% - var(--av-h) * 9 / 32); top: calc(30cqh - var(--av-h) * .33);
-  object-position: 50% 0%;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%); }
 #avatar img, #avatar video {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; object-position: 50% 0%;
@@ -82,14 +69,10 @@ body.video-on #still { opacity: 0; }
 /* soft fade so text over the avatar stays readable */
 .shade { position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(to bottom, rgba(11,23,48,.55) 0, rgba(11,23,48,0) 16%, rgba(11,23,48,0) 52%, rgba(11,23,48,.92) 100%); }
-body[data-layout="horizontal"] .shade {
-  background: linear-gradient(to bottom, rgba(11,23,48,0) 40%, rgba(11,23,48,.92) 100%),
-              linear-gradient(to right, rgba(11,23,48,0) 80%, var(--bg) 100%); }
 
 /* ---------- brand ---------- */
 .brand { position: absolute; display: flex; align-items: center; gap: 2cqmin; z-index: 3; }
 body[data-layout="vertical"]   .brand { top: 2.4cqh; left: 4.5cqw; }
-body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(68cqw + 2.5cqw); }
 /* Academy logo on a white emblem so its blue/red read on the dark theme */
 .brand-mark { flex: none; width: 9.5cqmin; height: 9.5cqmin; border-radius: 50%; display: grid; place-items: center;
   background: #fff; padding: 1cqmin; box-shadow: 0 .6cqmin 2.4cqmin rgba(0,0,0,.35), 0 0 0 .35cqmin rgba(226,180,75,.85); }
@@ -101,59 +84,18 @@ body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(68cqw + 2.5cqw); }
 .timer { position: absolute; top: 3cqh; right: 5cqw; z-index: 3; display: none;
   padding: 1cqmin 2.2cqmin; border-radius: 99px; font-weight: 700; font-size: 3cqmin; font-variant-numeric: tabular-nums;
   background: rgba(11,23,48,.72); border: 1px solid var(--line); backdrop-filter: blur(6px); }
-body[data-layout="horizontal"] .timer { top: 4cqh; left: 2.5cqw; right: auto; }
 body.st-live .timer { display: block; }
 .timer.low { color: #ffd27a; border-color: #8a6a1f; }
 .bar { position: absolute; left: 0; top: 0; height: .5cqmin; background: var(--accent); z-index: 4; width: 0; display: none;
   transition: width .25s linear; }
 body.st-live .bar { display: block; }
 
-/* ---------- side panel (horizontal) ---------- */
-.side { display: none; }
-body[data-layout="horizontal"] .side {
-  display: flex; flex-direction: column; position: absolute; top: 0; bottom: 0; left: 68cqw; right: 0;
-  padding: 16cqh 2.5cqw 0; background: var(--bg); z-index: 2; }
-.side h1 { font-size: 3.6cqh; line-height: 1.15; font-weight: 700; }
-.side .intro { color: var(--ink-dim); font-size: 2.5cqh; line-height: 1.45; margin-top: 1.6cqh; max-width: 60ch; }
-.steps { list-style: none; margin-top: 3cqh; display: grid; gap: 1.4cqh; }
-.steps li { display: flex; gap: 1.4cqw; align-items: center; font-size: 2.4cqh; }
-.steps b { flex: none; width: 4.4cqh; height: 4.4cqh; border-radius: 50%; display: grid; place-items: center;
-  border: 1px solid var(--accent); color: var(--accent); font-size: 2.2cqh; }
-.suggest { margin-top: 3.4cqh; }
-.suggest h3 { font-size: 2cqh; color: var(--ink-dim); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; }
-.chips { display: flex; flex-wrap: wrap; gap: 1.2cqh; margin-top: 1.4cqh; }
-.chip { padding: 1.3cqh 1.8cqh; border-radius: 99px; border: 1px solid var(--line); background: var(--bg-2);
-  font-size: 2.2cqh; text-align: left; line-height: 1.3; transition: background .2s, border-color .2s; }
-.chip:active { background: #1d3363; border-color: var(--accent); }
-body:not(.st-live) .chip { opacity: .55; }
 
 /* ---------- captions ---------- */
 #captions { position: absolute; z-index: 3; display: flex; flex-direction: column; justify-content: flex-end; gap: 1cqmin;
   overflow: hidden; pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%); mask-image: linear-gradient(to bottom, transparent 0, #000 22%); }
 body[data-layout="vertical"]   #captions { left: 6cqw; right: 6cqw; bottom: 34cqh; max-height: 19cqh; }
-/* horizontal: during a session the captions take the place of the intro + steps in the side panel, so nothing covers the avatar's face */
-body[data-layout="horizontal"] #captions { left: calc(68cqw + 2.5cqw); right: 2.5cqw; top: 26.5cqh; bottom: 46cqh; }
-body[data-layout="horizontal"] #captions p { text-shadow: none; }
-body[data-layout="horizontal"] #capAvatar { font-size: 2.7cqh; }
-body[data-layout="horizontal"] #capUser { font-size: 2.1cqh; }
-body[data-layout="horizontal"]:not(.st-live) #captions { display: none; }
-/* horizontal: the transcript can be scrolled (finger or mouse wheel) to read a long answer from the start */
-body[data-layout="horizontal"] #captions {
-  justify-content: flex-start; overflow-y: auto; pointer-events: auto; touch-action: pan-y; overscroll-behavior: contain;
-  padding-right: 1cqw; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent;
-  -webkit-mask-image: none; mask-image: none; }
-/* keeps short text at the bottom, collapses to nothing once the text overflows */
-body[data-layout="horizontal"] #captions::before { content: ''; flex: 1 0 0; }
-/* fade an edge only while there is more text beyond it */
-body[data-layout="horizontal"] #captions.more-above { --fade: linear-gradient(to bottom, transparent 0, #000 14%); }
-body[data-layout="horizontal"] #captions.more-below { --fade: linear-gradient(to top, transparent 0, #000 14%); }
-body[data-layout="horizontal"] #captions.more-above.more-below { --fade: linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); }
-body[data-layout="horizontal"] #captions.more-above, body[data-layout="horizontal"] #captions.more-below {
-  -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-body[data-layout="horizontal"].st-live .side .intro,
-body[data-layout="horizontal"].st-live .side .steps { display: none; }
-body[data-layout="horizontal"].st-live .suggest { margin-top: auto; margin-bottom: 11cqh; }
 #captions p { text-shadow: 0 1px 8px rgba(0,0,0,.6); }
 #capUser { color: var(--ink-dim); font-size: 3cqmin; font-style: italic; }
 #capAvatar { font-size: 3.6cqmin; line-height: 1.4; font-weight: 500; }
@@ -162,18 +104,6 @@ body[data-layout="horizontal"].st-live .suggest { margin-top: auto; margin-botto
 /* ---------- dock: push-to-talk + end ---------- */
 .dock { position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
 body[data-layout="vertical"]   .dock { left: 0; right: 0; bottom: 6.5cqh; }
-body[data-layout="horizontal"] .dock { left: 0; width: 68cqw; bottom: 6cqh; }
-/* narrower side panel (32%): tighter type so it all fits */
-body[data-layout="horizontal"] .side h1 { font-size: 3.1cqh; }
-body[data-layout="horizontal"] .side .intro { font-size: 2.1cqh; }
-body[data-layout="horizontal"] .steps { margin-top: 2.4cqh; gap: 1.1cqh; }
-body[data-layout="horizontal"] .steps li { font-size: 2.05cqh; gap: 1cqw; }
-body[data-layout="horizontal"] .steps b { width: 3.6cqh; height: 3.6cqh; font-size: 1.8cqh; }
-body[data-layout="horizontal"] .suggest { margin-top: 2.6cqh; }
-body[data-layout="horizontal"] .suggest h3 { font-size: 1.7cqh; }
-body[data-layout="horizontal"] .chips { gap: .9cqh; margin-top: 1.1cqh; }
-body[data-layout="horizontal"] .chip { font-size: 1.85cqh; padding: 1cqh 1.5cqh; }
-body[data-layout="horizontal"] .credit { right: auto; width: 68cqw; }
 
 /* ---------- credit line, bottom centre ---------- */
 .credit { position: absolute; left: 0; right: 0; bottom: 1.8cqh; z-index: 4; text-align: center; pointer-events: none;
@@ -186,7 +116,6 @@ body[data-layout="horizontal"] .credit { right: auto; width: 68cqw; }
   box-shadow: 0 1cqmin 4cqmin rgba(0,0,0,.45), inset 0 -.8cqmin 0 rgba(0,0,0,.12);
   transition: transform .12s ease, background .2s ease; }
 body[data-layout="vertical"]   #ptt { --ptt: 21cqw; }
-body[data-layout="horizontal"] #ptt { --ptt: 15cqh; }
 #ptt svg { width: 42%; height: 42%; }
 #ptt:active { transform: scale(.96); }
 #ptt .ring, #ptt .ring2 { position: absolute; inset: -1.4cqmin; border-radius: 50%; border: .5cqmin solid var(--accent);
@@ -205,7 +134,6 @@ body.speaking:not(.listening) #ptt { background: #f0cf7d; }
 #endBtn { position: absolute; left: calc(50% + var(--ptt-half) + 4cqmin); padding: 1.4cqmin 2.6cqmin; border-radius: 99px;
   border: 1px solid var(--line); background: rgba(11,23,48,.75); font-size: 2.6cqmin; font-weight: 600; display: none; white-space: nowrap; }
 body[data-layout="vertical"]   #endBtn { --ptt-half: 10.5cqw; }
-body[data-layout="horizontal"] #endBtn { --ptt-half: 7.5cqh; }
 body.st-live #endBtn { display: block; }
 
 /* ---------- overlays ---------- */
@@ -220,6 +148,105 @@ body.st-thanks #thanks { display: grid; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 .toast.warn { border-color: #8a6a1f; color: #ffd27a; }
 #corner { position: absolute; left: 0; top: 0; width: 9cqmin; height: 9cqmin; z-index: 7; }
+
+/* ================================================================
+   Horizontal (16:9). Left half: question chips + the avatar.
+   Right half: alumni posters while idle, the conversation while live.
+   ================================================================ */
+.side, .ask { display: none; }
+.kicker { color: var(--accent); font-size: 1.9cqh; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+
+/* avatar: the 9:16 video at --av-h tall, its box starting at --av-l (sides cropped, edges faded);
+   a dark blurred copy of the scene fills the rest of the half */
+body[data-layout="horizontal"] #avatar { right: auto; width: 50cqw; --av-h: 135cqh; --av-l: 16cqw; }
+body[data-layout="horizontal"] #avatar::before { content: ''; position: absolute; inset: -6cqh;
+  background: url('assets/avatar-idle.jpg') 50% 35% / cover; filter: blur(3cqh) brightness(.5) saturate(1.1); }
+body[data-layout="horizontal"] #avatar img, body[data-layout="horizontal"] #avatar video {
+  inset: auto; left: var(--av-l); width: calc(50cqw - var(--av-l)); height: var(--av-h);
+  top: calc(30cqh - var(--av-h) * .33); object-position: 50% 0%;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 11%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 11%, #000 93%, transparent 100%); }
+body[data-layout="horizontal"] .shade {
+  background: linear-gradient(to right, rgba(11,23,48,.82) 0, rgba(11,23,48,.5) 24%, rgba(11,23,48,0) 40%),
+              linear-gradient(to bottom, rgba(11,23,48,0) 52%, rgba(11,23,48,.9) 100%); }
+body[data-layout="horizontal"] .dock { left: 16cqw; width: 34cqw; bottom: 5.5cqh; }   /* under the avatar box (--av-l) */
+body[data-layout="horizontal"] #ptt { --ptt: 15cqh; }
+body[data-layout="horizontal"] #endBtn { --ptt-half: 7.5cqh; }
+body[data-layout="horizontal"] #captions { display: none; }
+
+/* question chips, left column; refreshed after every tap */
+body[data-layout="horizontal"] .ask { display: flex; flex-direction: column; gap: 1.4cqh; position: absolute; z-index: 4;
+  left: 2.6cqw; width: 14.4cqw; top: 50%; transform: translateY(-56%); }
+.chips { display: flex; flex-direction: column; gap: 1.2cqh; transition: opacity .35s ease, transform .35s ease; }
+.chips.swap { opacity: 0; transform: translateY(1.2cqh); }
+.chip { text-align: left; padding: 1.4cqh 1.6cqh; border-radius: 1.6cqh; font-size: 2cqh; line-height: 1.35;
+  background: rgba(11,23,48,.74); border: 1px solid rgba(255,255,255,.16); backdrop-filter: blur(8px);
+  box-shadow: 0 .8cqh 2.4cqh rgba(0,0,0,.28); transition: background .2s, border-color .2s, transform .12s, opacity .2s; }
+.chip:active { transform: scale(.97); background: rgba(29,51,99,.92); border-color: var(--accent); }
+.ask-hint { color: var(--ink-dim); font-size: 1.65cqh; line-height: 1.4; }
+body.st-connecting .chip, body.st-ending .chip, body.st-thanks .chip, body.listening .chip { opacity: .4; pointer-events: none; }
+
+/* right half */
+body[data-layout="horizontal"] .side { display: block; position: absolute; top: 0; bottom: 0; left: 50cqw; right: 0;
+  background: var(--bg); z-index: 2; border-left: 1px solid rgba(255,255,255,.06); }
+body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(50cqw + 3.5cqw); }
+body[data-layout="horizontal"] .timer { top: 5.2cqh; right: 3.5cqw; }
+body[data-layout="horizontal"] .credit { left: 50cqw; right: 0; }
+.showcase, .chatbox { position: absolute; left: 3.5cqw; right: 3.5cqw; top: 17cqh; bottom: 6.5cqh;
+  display: flex; flex-direction: column; transition: opacity .5s ease, visibility .5s; }
+.showcase { align-items: center; gap: 1.6cqh; }
+.chatbox { opacity: 0; visibility: hidden; }
+body.st-live .chatbox { opacity: 1; visibility: visible; }
+body.st-live .showcase { opacity: 0; visibility: hidden; }
+#showTitle { transition: opacity .6s ease; }
+#showTitle.swap { opacity: 0; }
+/* the current poster, blurred and darkened, is the background of the whole right half;
+   the poster itself has feathered edges so it melts into it */
+.side-bg { position: absolute; inset: 0; overflow: hidden; transition: opacity .8s ease; }
+.side-bg i { position: absolute; inset: -10%; background: center / cover no-repeat; opacity: 0;
+  filter: blur(4.5cqh) saturate(1.2) brightness(.62); transition: opacity 1.4s ease; }
+.side-bg i.on { opacity: 1; }
+.side-bg::after { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(11,23,48,.72) 0, rgba(11,23,48,.2) 26%, rgba(11,23,48,.2) 74%, rgba(11,23,48,.8) 100%),
+              linear-gradient(to right, rgba(11,23,48,.9) 0, rgba(11,23,48,0) 16%); }
+body.st-live .side-bg { opacity: .28; }          /* keep the conversation readable */
+.poster { position: relative; width: min(72cqh, 43cqw); aspect-ratio: 1;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%),
+                      linear-gradient(to bottom, transparent 0, #000 4%, #000 97.5%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%),
+              linear-gradient(to bottom, transparent 0, #000 4%, #000 97.5%, transparent 100%);
+  mask-composite: intersect; }
+.poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.4s ease; }
+.poster img.on { opacity: 1; }
+
+/* conversation (live) */
+.chat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 2cqw;
+  padding-bottom: 1.4cqh; border-bottom: 1px solid var(--line); }
+.chat-hint { color: var(--ink-dim); font-size: 1.75cqh; text-align: right; }
+.chat { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1.8cqh; padding: 2cqh 1cqw 1cqh 0;
+  overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent; }
+.chat::before { content: ''; flex: 1 0 0; }          /* keeps a short conversation at the bottom */
+.chat.more-above { --fade: linear-gradient(to bottom, transparent 0, #000 10%); }
+.chat.more-below { --fade: linear-gradient(to top, transparent 0, #000 10%); }
+.chat.more-above.more-below { --fade: linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%); }
+.chat.more-above, .chat.more-below { -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+.msg { display: flex; flex-direction: column; gap: .6cqh; max-width: 90%; animation: msg-in .35s ease; }
+@keyframes msg-in { from { opacity: 0; transform: translateY(1cqh); } }
+.msg .who { font-size: 1.55cqh; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+.msg .txt { font-size: 2.4cqh; line-height: 1.5; padding: 1.3cqh 1.8cqh; border-radius: 2cqh; white-space: pre-wrap; }
+.msg.user { align-self: flex-end; align-items: flex-end; }
+.msg.user .txt { background: rgba(255,255,255,.07); border: 1px solid var(--line); border-bottom-right-radius: .6cqh; }
+.msg.user.listening .txt { color: var(--ink-dim); font-style: italic; border-color: rgba(229,72,77,.6); }
+.msg.bot { align-self: flex-start; }
+.msg.bot .who { color: var(--accent); }
+.msg.bot .txt { background: var(--bg-2); border-left: .4cqh solid var(--accent); border-bottom-left-radius: .6cqh; }
+.typing { align-self: flex-start; display: none; gap: .7cqh; padding: 1.8cqh 2.2cqh; border-radius: 2cqh; background: var(--bg-2); }
+.typing i { width: 1cqh; height: 1cqh; border-radius: 50%; background: var(--ink-dim); animation: blink 1.2s infinite ease-in-out; }
+.typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+body.thinking:not(.speaking) .typing { display: flex; }
 
 /* ---------- setup ---------- */
 #setup { position: fixed; inset: 0; z-index: 20; display: none; overflow: auto; background: rgba(5,11,24,.94);
@@ -280,18 +307,24 @@ body.debug #debug { display: block; }
   </header>
   <div class="timer" id="timer">5:00</div>
 
+  <!-- horizontal only: question chips (left column) -->
+  <div class="ask">
+    <div class="kicker" data-t="youCanAsk"></div>
+    <div class="chips" id="chips"></div>
+    <p class="ask-hint" data-t="askHint"></p>
+  </div>
+
+  <!-- horizontal only: right half -->
   <aside class="side">
-    <h1 data-t="hello"></h1>
-    <p class="intro" data-t="intro"></p>
-    <ol class="steps">
-      <li><b>1</b><span data-t="step1"></span></li>
-      <li><b>2</b><span data-t="step2"></span></li>
-      <li><b>3</b><span data-t="step3"></span></li>
-    </ol>
-    <div class="suggest">
-      <h3 data-t="youCanAsk"></h3>
-      <div class="chips" id="chips"></div>
-    </div>
+    <div class="side-bg" id="sideBg" aria-hidden="true"><i></i><i></i></div>
+    <section class="showcase" aria-label="DAV Alumni">
+      <div class="kicker" id="showTitle"></div>
+      <div class="poster" id="poster"><img alt=""><img alt=""></div>
+    </section>
+    <section class="chatbox">
+      <div class="chat-head"><span class="kicker" data-t="chatTitle"></span><span class="chat-hint" data-t="chatHint"></span></div>
+      <div class="chat" id="chat"><div class="typing" id="typing"><i></i><i></i><i></i></div></div>
+    </section>
   </aside>
 
   <div id="captions"><p id="capUser"></p><p id="capAvatar"></p></div>
@@ -326,7 +359,7 @@ body.debug #debug { display: block; }
       <label>Bố cục màn hình · Layout</label>
       <div class="layouts">
         <button class="lay" data-layout="vertical"><i class="v"></i><div><b>Dọc · toàn thân</b><small>Màn hình đứng 9:16</small></div></button>
-        <button class="lay" data-layout="horizontal"><i class="h"></i><div><b>Ngang · nửa người</b><small>Màn hình ngang 16:9</small></div></button>
+        <button class="lay" data-layout="horizontal"><i class="h"></i><div><b>Ngang</b><small>16:9 · câu hỏi gợi ý, gương mặt Alumni</small></div></button>
       </div>
     </div>
 
@@ -386,9 +419,9 @@ const STORE = 'dav-avatar-kiosk:v3';
 const TEXT = {
   vi: {
     brand1: 'Học viện Ngoại giao', brand2: 'DAV Receptionist · DAV Alumni Day 2026',
-    hello: 'Xin chào, tôi là DAV Receptionist', intro: 'Lễ tân AI của Học viện Ngoại giao. Hãy hỏi tôi về sự kiện, Học viện và mạng lưới DAV Alumni.',
-    step1: 'Chạm nút micro để bắt đầu', step2: 'Chạm một lần rồi nói câu hỏi', step3: 'Chạm lần nữa, tôi sẽ trả lời ngay',
-    youCanAsk: 'Bạn có thể hỏi', end: 'Kết thúc',
+    youCanAsk: 'Bạn có thể hỏi', askHint: 'Chạm vào một câu hỏi, DAV Receptionist sẽ trả lời ngay.', end: 'Kết thúc',
+    chatTitle: 'Cuộc trò chuyện', chatHint: 'Chạm micro để nói · chạm lần nữa để gửi',
+    whoYou: 'Bạn', whoBot: 'DAV Receptionist', listeningMsg: 'Đang nghe…',
     idle: 'Chạm để bắt đầu trò chuyện', idleSub: 'DAV Receptionist luôn sẵn sàng hỗ trợ bạn',
     connecting: 'Đang kết nối…', connectingSub: 'Chờ vài giây nhé',
     ready: 'Chạm để nói', readySub: 'Chạm lần nữa khi nói xong',
@@ -402,18 +435,12 @@ const TEXT = {
     errNet: 'Không kết nối được. Vui lòng thử lại.',
     errMic: 'Không bật được micro. Hãy cho phép trình duyệt dùng micro.',
     errCredits: 'Đã hết lượt sử dụng hôm nay.',
-    suggestions: [
-      'DAV Alumni Day 2026 có những hoạt động gì?',
-      'Làm sao để tham gia mạng lưới DAV Alumni?',
-      'Học viện Ngoại giao được thành lập khi nào?',
-      'Tôi có thể liên hệ DAV Alumni bằng cách nào?',
-    ],
   },
   en: {
     brand1: 'Diplomatic Academy of Vietnam', brand2: 'DAV Receptionist · DAV Alumni Day 2026',
-    hello: 'Hello, I’m the DAV Receptionist', intro: 'The Academy’s AI receptionist. Ask me about the event, the Academy and the DAV Alumni Network.',
-    step1: 'Tap the mic button to start', step2: 'Tap once and ask your question', step3: 'Tap again and I’ll answer',
-    youCanAsk: 'You can ask', end: 'End',
+    youCanAsk: 'You can ask', askHint: 'Tap a question and the DAV Receptionist answers right away.', end: 'End',
+    chatTitle: 'Conversation', chatHint: 'Tap the mic to talk · tap again to send',
+    whoYou: 'You', whoBot: 'DAV Receptionist', listeningMsg: 'Listening…',
     idle: 'Tap to start talking', idleSub: 'The DAV Receptionist is here to help',
     connecting: 'Connecting…', connectingSub: 'Just a few seconds',
     ready: 'Tap to talk', readySub: 'Tap again when you’re done',
@@ -427,14 +454,49 @@ const TEXT = {
     errNet: 'Couldn’t connect. Please try again.',
     errMic: 'Couldn’t turn on the microphone. Allow microphone access in the browser.',
     errCredits: 'No more sessions available today.',
-    suggestions: [
-      'What happens at DAV Alumni Day 2026?',
-      'How can I join the DAV Alumni Network?',
-      'When was the Diplomatic Academy founded?',
-      'How can I contact DAV Alumni?',
-    ],
   },
 };
+
+// Question chips (horizontal layout). Three are shown at a time and replaced
+// after every tap. The two lists are parallel: item n is the same question.
+// Keep them to things the "DAV" context in LiveAvatar can answer.
+const QUESTIONS = {
+  vi: [
+    'DAV Alumni Day 2026 có những hoạt động gì?',
+    'Ngày hội chính diễn ra khi nào, ở đâu?',
+    'Chương trình sáng ngày 22/11 gồm những phần nào?',
+    'Mấy giờ bắt đầu check-in?',
+    'Ai biểu diễn văn nghệ chào mừng?',
+    'Phần hội có những hoạt động gì?',
+    'Có tour tham quan Học viện không?',
+    'Làm sao để tham gia mạng lưới DAV Alumni?',
+    'Tôi có thể liên hệ DAV Alumni bằng cách nào?',
+    'Học viện Ngoại giao được thành lập khi nào?',
+    'Sứ mạng của Học viện Ngoại giao là gì?',
+    'Giá trị cốt lõi của Học viện là gì?',
+    'Giám đốc Học viện Ngoại giao là ai?',
+    'Kể cho tôi về một cựu sinh viên tiêu biểu.',
+    'DAV Alumni Network bảo vệ dữ liệu cá nhân thế nào?',
+  ],
+  en: [
+    'What happens at DAV Alumni Day 2026?',
+    'When and where is the main day?',
+    'What is on the programme on the morning of 22 November?',
+    'What time does check-in start?',
+    'Who performs at the opening?',
+    'What is there to do after the ceremony?',
+    'Is there a tour of the Academy?',
+    'How can I join the DAV Alumni Network?',
+    'How can I contact DAV Alumni?',
+    'When was the Diplomatic Academy founded?',
+    'What is the Academy’s mission?',
+    'What are the Academy’s core values?',
+    'Who is the Director of the Academy?',
+    'Tell me about a notable alumnus.',
+    'How does the DAV Alumni Network protect personal data?',
+  ],
+};
+const CHIP_COUNT = 3;
 
 /* ======================= settings ======================= */
 const params = new URLSearchParams(location.search);
@@ -465,12 +527,8 @@ function applyConfig() {
   body.dataset.layout = cfg.layout;
   document.documentElement.lang = cfg.language === 'en' ? 'en' : 'vi';
   for (const el of document.querySelectorAll('[data-t]')) el.textContent = T()[el.dataset.t];
-  const chips = $('chips'); chips.innerHTML = '';
-  for (const q of T().suggestions) {
-    const b = document.createElement('button'); b.className = 'chip'; b.textContent = q;
-    b.addEventListener('click', () => askText(q));
-    chips.appendChild(b);
-  }
+  refreshChips(false, false);
+  if (show.seq.length && show.i >= 0) setShowTitle(show.seq[show.i].g);
   render();
 }
 
@@ -515,6 +573,7 @@ function render() {
   $('pttSub').textContent = sub;
   body.classList.toggle('listening', state === 'live' && ptt.on);
   body.classList.toggle('speaking', state === 'live' && avatarSpeaking);
+  body.classList.toggle('thinking', state === 'live' && thinking);
 }
 
 let toastTimer = 0;
@@ -523,21 +582,177 @@ function toast(msg, kind = '', ms = 4000) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.className = 'toast'; }, ms);
 }
 
+// Captions over the avatar (vertical layout): the latest question and answer.
 function setCaption(who, text) {
-  const box = $('captions');
-  // Follow new text unless the visitor has scrolled up to reread something.
-  const follow = who === 'user' || !text || box.scrollHeight - box.scrollTop - box.clientHeight < 40;
   if (who === 'user') $('capUser').textContent = text ? T().youSaid + text : '';
   else $('capAvatar').textContent = text || '';
-  if (follow) box.scrollTop = box.scrollHeight;
-  updateCaptionFade();
 }
-function updateCaptionFade() {
-  const box = $('captions');
+function clearCaptions() { setCaption('user', ''); setCaption('avatar', ''); }
+
+/* ======================= conversation panel (horizontal) ======================= */
+// One bubble per turn. A voice turn shows "Listening…" until its transcript
+// arrives; the avatar's bubble fills in as it speaks.
+// Avatar replies are grouped by their text events, not by speech events: the
+// text of an answer can arrive before the avatar starts speaking, and the
+// transcript of a reply cut short by the visitor arrives after the new question.
+const chat = { user: null, userFinals: [], userPartial: '', bot: null, botText: '', botOpen: false, draining: false, drainBubble: null, drainTimer: 0 };
+
+function chatAdd(role, text) {
+  const m = document.createElement('div'); m.className = 'msg ' + role;
+  const who = document.createElement('div'); who.className = 'who'; who.textContent = role === 'user' ? T().whoYou : T().whoBot;
+  const txt = document.createElement('div'); txt.className = 'txt'; txt.textContent = text;
+  m.append(who, txt);
+  $('chat').insertBefore(m, $('typing'));   // the typing dots stay last
+  chatScroll(true);
+  return m;
+}
+function chatSet(m, text) {
+  const box = $('chat');
+  const follow = box.scrollHeight - box.scrollTop - box.clientHeight < 40;   // unless scrolled up to reread
+  m.querySelector('.txt').textContent = text;
+  chatScroll(follow);
+}
+function chatScroll(toEnd) {
+  const box = $('chat');
+  if (toEnd) box.scrollTop = box.scrollHeight;
   box.classList.toggle('more-above', box.scrollTop > 2);
   box.classList.toggle('more-below', box.scrollHeight - box.scrollTop - box.clientHeight > 2);
 }
-function clearCaptions() { setCaption('user', ''); setCaption('avatar', ''); }
+function chatReset() {
+  for (const m of $('chat').querySelectorAll('.msg')) m.remove();
+  clearTimeout(chat.drainTimer);
+  Object.assign(chat, { user: null, userFinals: [], userPartial: '', bot: null, botText: '', botOpen: false, draining: false, drainBubble: null });
+  chatScroll(true);
+}
+function chatUserStart() {                  // tap 1: a "Listening…" bubble
+  chat.userFinals = []; chat.userPartial = '';
+  chat.user = chatAdd('user', T().listeningMsg);
+  chat.user.classList.add('listening'); chat.user.dataset.empty = '1';
+}
+function chatUserShow() {                   // transcript so far for this voice turn
+  const text = [...chat.userFinals, chat.userPartial].filter(Boolean).join(' ').trim();
+  if (!text) return;
+  if (!chat.user) chat.user = chatAdd('user', '');
+  chat.user.classList.remove('listening'); delete chat.user.dataset.empty;
+  chatSet(chat.user, text);
+}
+function chatUserStop() {                   // tap 2: drop the bubble later if nothing was heard
+  const m = chat.user; if (!m) return;
+  m.classList.remove('listening');
+  if (m.dataset.empty) { m.querySelector('.txt').textContent = '…'; setTimeout(() => { if (m.dataset.empty) m.remove(); }, 12000); }
+}
+function chatUserCancel() { if (chat.user && chat.user.dataset.empty) chat.user.remove(); chat.user = null; }
+// The SDK echoes a typed question back as a user transcript; it lands in this same bubble.
+function chatAsk(q) { Object.assign(chat, { userFinals: [], userPartial: '' }); chat.user = chatAdd('user', q); }
+// The visitor cut the avatar off. Text of that reply keeps arriving for a moment,
+// ending with its transcript (what was actually said): ignore the text, use the
+// transcript for the cut-off bubble, then carry on with the new reply.
+function chatInterrupt() {
+  chat.drainBubble = chat.botOpen ? chat.bot : null;
+  if (chat.drainBubble) chatSet(chat.drainBubble, chat.botText.trim() + '…');
+  chat.botOpen = false; chat.draining = true;
+  clearTimeout(chat.drainTimer);
+  chat.drainTimer = setTimeout(() => { chat.draining = false; chat.drainBubble = null; }, 4000);   // in case no transcript comes
+}
+function botChunk(t) {                       // part of the reply being generated
+  if (chat.draining) return;
+  if (!chat.botOpen) {                       // first text of a new reply
+    Object.assign(chat, { botOpen: true, bot: null, botText: '' });
+    thinking = false; render();
+  }
+  // Chunks may arrive as deltas or as the growing text; handle both.
+  chat.botText = t.startsWith(chat.botText) ? t : chat.botText + t;
+  showBot();
+}
+function botFinal(t) {                       // the whole reply (or the part spoken before a cut)
+  if (chat.draining) {
+    clearTimeout(chat.drainTimer); chat.draining = false;
+    if (chat.drainBubble && t) chatSet(chat.drainBubble, t.trim() + '…');
+    chat.drainBubble = null;
+    return;
+  }
+  if (!chat.botOpen) chat.bot = null;        // a reply we saw no chunks for
+  chat.botOpen = false;
+  if (t) chat.botText = t;
+  showBot();
+}
+function showBot() {
+  setCaption('avatar', chat.botText);
+  if (!chat.botText) return;
+  if (!chat.bot) chat.bot = chatAdd('bot', chat.botText); else chatSet(chat.bot, chat.botText);
+}
+$('chat').addEventListener('scroll', () => {
+  chatScroll(false);
+  if (state === 'live') lastActivity = Date.now();   // reading counts as activity for the quiet timer
+}, { passive: true });
+
+/* ======================= question chips (horizontal) ======================= */
+let deck = [], shownQs = [];
+const lang = () => (cfg.language === 'en' ? 'en' : 'vi');
+function drawQuestions(exclude) {
+  const out = [];
+  for (let guard = 0; out.length < CHIP_COUNT && guard < 100; guard++) {
+    if (!deck.length) deck = [...QUESTIONS.vi.keys()].sort(() => Math.random() - .5);
+    const i = deck.shift();
+    if (!out.includes(i) && !exclude.includes(i)) out.push(i);
+  }
+  return out;
+}
+// newSet: pick different questions (after a tap); animate: fade the swap
+function refreshChips(newSet = true, animate = true) {
+  const box = $('chips');
+  const fill = () => {
+    if (newSet || !shownQs.length) shownQs = drawQuestions(shownQs);
+    box.innerHTML = '';
+    for (const i of shownQs) {
+      const q = QUESTIONS[lang()][i];
+      const b = document.createElement('button'); b.className = 'chip'; b.textContent = q;
+      b.addEventListener('click', () => askText(q));
+      box.appendChild(b);
+    }
+    box.classList.remove('swap');
+  };
+  if (!animate) return fill();
+  box.classList.add('swap');
+  setTimeout(fill, 350);
+}
+
+/* ======================= alumni posters (horizontal, idle) ======================= */
+// Posters and group titles come from assets/alumni/alumni.json; each group is
+// shown in order, one poster at a time, crossfading every interval_seconds.
+const show = { seq: [], i: -1, front: 0, timer: 0 };
+async function loadAlumni() {
+  try {
+    const j = await (await fetch('assets/alumni/alumni.json')).json();
+    for (const g of j.groups) for (const f of g.files) show.seq.push({ src: g.dir + f, g });
+    await nextPoster();
+    show.timer = setInterval(() => { if (state !== 'live' && body.dataset.layout === 'horizontal') nextPoster(); },
+      (j.interval_seconds || 7) * 1000);
+  } catch (e) { log('alumni posters unavailable', String(e)); }
+}
+async function nextPoster() {
+  if (!show.seq.length) return;
+  show.i = (show.i + 1) % show.seq.length;
+  const item = show.seq[show.i];
+  const imgs = $('poster').querySelectorAll('img');
+  const back = imgs[1 - show.front];
+  back.src = item.src;
+  try { await back.decode(); } catch { return; }          // skip a poster that fails to load
+  const bgs = $('sideBg').querySelectorAll('i');
+  bgs[1 - show.front].style.backgroundImage = `url("${item.src}")`;
+  imgs[show.front].classList.remove('on'); back.classList.add('on');
+  bgs[show.front].classList.remove('on'); bgs[1 - show.front].classList.add('on');
+  show.front = 1 - show.front;
+  setShowTitle(item.g);
+  new Image().src = show.seq[(show.i + 1) % show.seq.length].src;   // warm the next one
+}
+function setShowTitle(g) {
+  const el = $('showTitle'), t = lang() === 'en' ? g.title_en : g.title_vi;
+  if (el.textContent === t) return;
+  if (!el.textContent) { el.textContent = t; return; }
+  el.classList.add('swap');
+  setTimeout(() => { el.textContent = t; el.classList.remove('swap'); }, 600);
+}
 
 /* ======================= session ======================= */
 let attemptId = 0;
@@ -545,7 +760,7 @@ async function startSession() {
   if (state !== 'idle') return;
   const attempt = ++attemptId;
   setState('connecting');
-  clearCaptions();
+  clearCaptions(); chatReset();
   log('start: requesting token', { minutes: cfg.minutes, language: cfg.language, sandbox: SANDBOX });
   clearTimeout(connectTimer);
   connectTimer = setTimeout(() => {
@@ -579,6 +794,7 @@ async function startSession() {
     }
     log('session started', s.sessionId);
     if (state === 'connecting' && s._remoteVideoTrack) goLive();
+    if (pendingQuestion) askWhenReady(s, pendingQuestion);
   } catch (e) {
     if (s && session !== s) { s.stop().catch(() => {}); return; }
     if (attemptId === attempt && state === 'connecting') failStart(e);
@@ -587,6 +803,7 @@ async function startSession() {
 
 function failStart(e) {
   log('start failed:', String(e && e.message || e));
+  pendingQuestion = null;
   clearTimeout(connectTimer);
   const s = session; session = null;
   if (s) s.stop().catch(() => {});
@@ -619,7 +836,6 @@ function wire(s) {
     log('avatar.speak_started');
     if (session !== s) return;
     avatarSpeaking = true; thinking = false; lastActivity = Date.now();
-    setCaption('avatar', '');
     render();
   });
   s.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
@@ -629,21 +845,24 @@ function wire(s) {
   });
   s.on(AgentEventsEnum.AVATAR_TRANSCRIPTION_CHUNK, e => {
     if (session !== s || !e || !e.text) return;
-    const cur = $('capAvatar').textContent;
-    // Chunks may arrive as deltas or as the growing text; handle both.
-    setCaption('avatar', e.text.startsWith(cur) ? e.text : cur + e.text);
+    botChunk(e.text);
   });
   s.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, e => {
     if (session !== s || !e) return;
-    log('avatar:', e.text); setCaption('avatar', e.text);
+    log('avatar:', e.text);
+    botFinal(e.text || '');
   });
   s.on(AgentEventsEnum.USER_TRANSCRIPTION, e => {
     if (session !== s || !e) return;
-    log('user:', e.text); setCaption('user', e.text); lastActivity = Date.now();
+    log('user:', e.text); lastActivity = Date.now();
+    if (e.text) { chat.userFinals.push(e.text); chat.userPartial = ''; }
+    setCaption('user', chat.userFinals.join(' ')); chatUserShow();
   });
   s.on(AgentEventsEnum.USER_TRANSCRIPTION_CHUNK, e => {
     if (session !== s || !e || !e.text) return;
-    log('user (partial):', e.text); setCaption('user', e.text);
+    log('user (partial):', e.text);
+    chat.userPartial = e.text;
+    setCaption('user', [...chat.userFinals, e.text].join(' ')); chatUserShow();
   });
   s.on(AgentEventsEnum.USER_SPEAK_STARTED, () => log('user.speak_started'));
   s.on(AgentEventsEnum.USER_SPEAK_ENDED, () => log('user.speak_ended'));
@@ -665,6 +884,7 @@ async function endSession(reason) {
   if (state !== 'live' && state !== 'connecting') return;
   log('end:', reason);
   clearTimeout(connectTimer);
+  pendingQuestion = null;
   stopListeningUI();
   const s = session; session = null;
   setState('ending');
@@ -690,7 +910,9 @@ function pttStart() {
   ptt.on = true;
   lastActivity = Date.now(); idleWarned = false;
   if (avatarSpeaking) { try { s.interrupt(); } catch (e) { log('interrupt failed', String(e)); } }
+  if (avatarSpeaking || chat.botOpen) chatInterrupt();
   render();
+  setCaption('user', ''); chatUserStart();
   clearTimeout(ptt.timer);
   ptt.timer = setTimeout(() => { if (ptt.on) pttStop('max'); }, MAX_LISTEN_SECONDS * 1000);
   ptt.chain = ptt.chain.then(async () => {
@@ -707,7 +929,7 @@ function pttStart() {
     await s.voiceChat.startPushToTalk();
   }).then(() => log('ptt started')).catch(e => {
     log('ptt start failed', String(e && e.message || e));
-    if (session === s) { stopListeningUI(); toast(T().errMic, 'warn', 6000); }
+    if (session === s) { stopListeningUI(); chatUserCancel(); toast(T().errMic, 'warn', 6000); }
   });
 }
 
@@ -724,6 +946,7 @@ function pttStop(why) {
   if (!ptt.on) return;
   const s = session;
   stopListeningUI();
+  chatUserStop();
   thinking = true; lastActivity = Date.now(); render();
   if (!s) return;
   ptt.chain = ptt.chain.then(() => s.voiceChat.stopPushToTalk())
@@ -752,21 +975,31 @@ pttBtn.addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
 pttBtn.addEventListener('contextmenu', e => e.preventDefault());
 $('endBtn').addEventListener('click', () => endSession('end button'));
 
+// A tapped question is sent as text and answered straight away. From the idle
+// screen it starts a session first and is asked as soon as the avatar is up
+// (cutting its greeting short).
+let pendingQuestion = null;
 function askText(q) {
-  if (state === 'idle') { startSession(); return; }
+  if (ptt.on) return;                                   // finish the voice question first
+  if (state === 'idle') { pendingQuestion = q; startSession(); refreshChips(); return; }
   if (state !== 'live' || !session) return;
   try {
     if (avatarSpeaking) session.interrupt();
+    if (avatarSpeaking || chat.botOpen) chatInterrupt();
     session.message(q);
-    setCaption('user', q); thinking = true; lastActivity = Date.now(); render();
+    setCaption('user', q); chatAsk(q);
+    thinking = true; lastActivity = Date.now(); render();
     log('asked:', q);
+    setTimeout(() => { if (thinking && !avatarSpeaking) { thinking = false; render(); } }, 15000);
   } catch (e) { log('message failed', String(e)); }
+  refreshChips();
 }
-
-$('captions').addEventListener('scroll', () => {
-  updateCaptionFade();
-  if (state === 'live') lastActivity = Date.now(); // reading counts as activity for the quiet timer
-}, { passive: true });
+// Wait (briefly) for the greeting to begin so the interrupt has something to cut.
+async function askWhenReady(s, q) {
+  pendingQuestion = null;
+  for (let t = 0; t < 30 && session === s && (state !== 'live' || !avatarSpeaking); t++) await new Promise(r => setTimeout(r, 100));
+  if (session === s && state === 'live') askText(q);
+}
 
 /* ======================= timers ======================= */
 function fmt(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
@@ -891,6 +1124,7 @@ window.kioskState = () => ({ state, mic: session && session.voiceChat.state, ptt
 /* ======================= boot ======================= */
 buildVoices();
 applyConfig();
+loadAlumni();
 setState('idle');
 log('kiosk ready', { api: API_BASE, layout: cfg.layout, sandbox: SANDBOX });
 if (params.has('setup') || (!saved && !params.get('layout'))) openSetup();

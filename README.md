@@ -5,16 +5,35 @@ An AI receptionist for the lobby screen, built on [LiveAvatar](https://app.livea
 Live: https://dav-daitech.github.io/avatar-kiosk/
 
 - **Vertical (full body):** https://dav-daitech.github.io/avatar-kiosk/?layout=vertical
-- **Horizontal (half body + info panel):** https://dav-daitech.github.io/avatar-kiosk/?layout=horizontal
+- **Horizontal (16:9):** https://dav-daitech.github.io/avatar-kiosk/?layout=horizontal
+
+## Horizontal layout
+
+The screen is split in half.
+
+- **Left:** the avatar, with three suggested questions beside it. Tapping a question asks it straight away (from the idle screen it starts a session first and cuts the greeting short). After every tap the three questions are replaced by three others.
+- **Right, idle:** the "Gương mặt Alumni" posters, one at a time, fading from one to the next. The blurred poster also tints the whole half behind it.
+- **Right, during a session:** the conversation, one bubble per question and answer. It scrolls (finger or mouse wheel) to reread a long answer.
 
 ## How a visit works
 
 1. **Idle:** a still photo of the avatar with a big mic button. Uses no credits.
 2. **Tap the button:** a session starts in about 5–10 s and the avatar greets the visitor.
-3. **Tap to talk:** tap the button once and speak, then tap it again to send. The avatar answers straight away. Listening stops by itself after 30 s if nobody taps again. Tapping while the avatar is talking interrupts it. In the horizontal layout, the suggested questions can also be tapped, and the conversation text on the right can be scrolled to reread a long answer.
+3. **Tap to talk:** tap the button once and speak, then tap it again to send. The avatar answers straight away. Listening stops by itself after 30 s if nobody taps again. Tapping while the avatar is talking interrupts it. In the horizontal layout, a suggested question can be tapped instead.
 4. **End:** the session ends after **5 minutes**, when the visitor taps **Kết thúc**, or after 60 s with nobody talking. A thank-you screen shows, then the idle photo returns.
 
 Credits are used only between steps 2 and 4 (2 credits per minute). LiveAvatar also ends every session itself at the time limit (+20 s), even if the kiosk loses power or network.
+
+## Editing
+
+Everything is in this repository, so it can be edited from anywhere: in a cloud coding session, in the browser (press `.` on the GitHub page to open the editor), or locally. **A push to `main` updates the live page in about a minute.** Only changes inside `server/` also need a Vercel redeploy (see below).
+
+| To change | Edit |
+|---|---|
+| The suggested questions | `QUESTIONS` in `index.html` (Vietnamese and English lists, same order). Keep them to things the "DAV" context can answer. |
+| The alumni posters | Add or remove images in `assets/alumni/<group>/` and list them in `assets/alumni/alumni.json`. Square images, about 1200 px, WebP or JPEG. `interval_seconds` sets how long each poster stays. |
+| What the avatar knows and says first | LiveAvatar → Contexts → "DAV". No code change. |
+| Avatar size in the horizontal layout | `--av-h` (height) and `--av-l` (left edge) in `index.html`. |
 
 ## Setup screen
 
@@ -68,6 +87,8 @@ open "http://localhost:8095/?api=http://localhost:8096"
 
 **Test for free:** add `&sandbox` to any link. LiveAvatar's sandbox is free but only offers its sample avatar "Wayne" (a man), and sessions stop after 1 minute. Without `sandbox`, the DAV avatar is used and credits are spent.
 
+**Test a spoken question without a microphone:** with the page served on :8095, run `node tools/voice-test.mjs horizontal`. A throwaway Chrome plays `tools/question.wav` into a fake microphone, taps to talk and to send, and prints the conversation (sandbox, no credits).
+
 **Check credits and avatars:** run `./avatar-status.sh`. The setup screen also shows credits left.
 
 ## Kiosk mode (on the screen's computer)
@@ -86,6 +107,8 @@ On macOS, replace `google-chrome` with `"/Applications/Google Chrome.app/Content
 |---|---|
 | `index.html` | The kiosk page |
 | `assets/avatar-idle.jpg` | Idle photo (same framing as the live video) |
+| `assets/alumni/` | Alumni posters for the horizontal layout, and `alumni.json` listing them |
+| `tools/voice-test.mjs` | End-to-end voice test with a fake microphone |
 | `vendor/` | LiveAvatar Web SDK, bundled (see `vendor/README.md`) |
 | `server/` | Token server: `api/session.js`, `api/status.js`, `api/voice-preview.js`, `dev.mjs` for local use |
 | `avatar-status.sh` | Lists the account's avatars and their status |
