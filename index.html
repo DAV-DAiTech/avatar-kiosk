@@ -128,6 +128,19 @@ body[data-layout="horizontal"] #captions p { text-shadow: none; }
 body[data-layout="horizontal"] #capAvatar { font-size: 2.7cqh; }
 body[data-layout="horizontal"] #capUser { font-size: 2.1cqh; }
 body[data-layout="horizontal"]:not(.st-live) #captions { display: none; }
+/* horizontal: the transcript can be scrolled (finger or mouse wheel) to read a long answer from the start */
+body[data-layout="horizontal"] #captions {
+  justify-content: flex-start; overflow-y: auto; pointer-events: auto; touch-action: pan-y; overscroll-behavior: contain;
+  padding-right: 1cqw; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent;
+  -webkit-mask-image: none; mask-image: none; }
+/* keeps short text at the bottom, collapses to nothing once the text overflows */
+body[data-layout="horizontal"] #captions::before { content: ''; flex: 1 0 0; }
+/* fade an edge only while there is more text beyond it */
+body[data-layout="horizontal"] #captions.more-above { --fade: linear-gradient(to bottom, transparent 0, #000 14%); }
+body[data-layout="horizontal"] #captions.more-below { --fade: linear-gradient(to top, transparent 0, #000 14%); }
+body[data-layout="horizontal"] #captions.more-above.more-below { --fade: linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); }
+body[data-layout="horizontal"] #captions.more-above, body[data-layout="horizontal"] #captions.more-below {
+  -webkit-mask-image: var(--fade); mask-image: var(--fade); }
 body[data-layout="horizontal"].st-live .side .intro,
 body[data-layout="horizontal"].st-live .side .steps { display: none; }
 body[data-layout="horizontal"].st-live .suggest { margin-top: auto; margin-bottom: 11cqh; }
@@ -501,8 +514,18 @@ function toast(msg, kind = '', ms = 4000) {
 }
 
 function setCaption(who, text) {
+  const box = $('captions');
+  // Follow new text unless the visitor has scrolled up to reread something.
+  const follow = who === 'user' || !text || box.scrollHeight - box.scrollTop - box.clientHeight < 40;
   if (who === 'user') $('capUser').textContent = text ? T().youSaid + text : '';
   else $('capAvatar').textContent = text || '';
+  if (follow) box.scrollTop = box.scrollHeight;
+  updateCaptionFade();
+}
+function updateCaptionFade() {
+  const box = $('captions');
+  box.classList.toggle('more-above', box.scrollTop > 2);
+  box.classList.toggle('more-below', box.scrollHeight - box.scrollTop - box.clientHeight > 2);
 }
 function clearCaptions() { setCaption('user', ''); setCaption('avatar', ''); }
 
@@ -729,6 +752,11 @@ function askText(q) {
     log('asked:', q);
   } catch (e) { log('message failed', String(e)); }
 }
+
+$('captions').addEventListener('scroll', () => {
+  updateCaptionFade();
+  if (state === 'live') lastActivity = Date.now(); // reading counts as activity for the quiet timer
+}, { passive: true });
 
 /* ======================= timers ======================= */
 function fmt(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
