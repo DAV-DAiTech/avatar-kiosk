@@ -14,6 +14,9 @@ The screen is split in half.
 - **Left:** the avatar, with the full list of suggested questions beside it (grouped, scrollable by finger or mouse wheel). Tapping a question asks it straight away (from the idle screen it starts a session first and cuts the greeting short); questions already asked in this visit get a ✓.
 - **Right, idle:** the "Gương mặt Alumni", one person at a time: their portrait (cut out of the poster) with name, cohort and titles below, fading from one person to the next.
 - **Right, during a session:** the conversation, one bubble per question and answer. It scrolls (finger or mouse wheel) to reread a long answer.
+  - Answers are laid out for reading: the first sentence as a lead, the rest as bullet points, numbered lists ("1. … 2. …") as numbered items with a bold title and their points below, dates and times in gold, a closing question set apart. Only the display changes; the avatar still says the reply as written.
+  - The text comes from LiveKit's transcript of the avatar's voice, so it appears word by word as the avatar speaks and is complete. (The SDK's own text chunks arrive sooner but drop words; they are only used if that transcript never shows up.)
+  - The transcript has no line breaks, so the layout is read from punctuation. Answers that number their points with "1.", "2." and end each point with a full stop come out best.
 
 ## How a visit works
 

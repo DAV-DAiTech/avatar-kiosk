@@ -253,7 +253,27 @@ body.st-live .showcase { opacity: 0; visibility: hidden; }
 .msg.user.listening .txt { color: var(--ink-dim); font-style: italic; border-color: rgba(229,72,77,.6); }
 .msg.bot { align-self: flex-start; }
 .msg.bot .who { color: var(--accent); }
-.msg.bot .txt { background: var(--bg-2); border-left: .4cqh solid var(--accent); border-bottom-left-radius: .6cqh; }
+.msg.bot .txt { background: var(--bg-2); border-left: .4cqh solid var(--accent); border-bottom-left-radius: .6cqh;
+  white-space: normal; display: flex; flex-direction: column; gap: 1cqh; }
+/* an answer laid out as: lead sentence, bullet points, closing question */
+.msg.bot .txt p { margin: 0; }
+.msg.bot .lead { font-weight: 600; }
+.msg.bot .sub { color: var(--ink-dim); font-weight: 600; }
+.msg.bot .tail { color: var(--ink-dim); font-style: italic; }
+.msg.bot ul, .msg.bot ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .8cqh; }
+.msg.bot li { position: relative; padding-left: 2.6cqh; }
+.msg.bot ul > li::before { content: ''; position: absolute; left: .5cqh; top: .6em; width: .95cqh; height: .95cqh;
+  border-radius: 50%; background: var(--accent); }
+.msg.bot ol { counter-reset: item; gap: 1.4cqh; }
+.msg.bot ol > li { counter-increment: item; padding-left: 3.8cqh; }
+.msg.bot ol > li::before { content: counter(item); position: absolute; left: 0; top: .2em; width: 2.7cqh; height: 2.7cqh;
+  border-radius: 50%; background: var(--accent); color: var(--bg); font-size: 1.6cqh; font-weight: 800;
+  display: grid; place-items: center; }
+.msg.bot strong { display: block; font-weight: 700; }
+.msg.bot li ul { margin-top: .5cqh; gap: .3cqh; color: var(--ink-dim); }
+.msg.bot li ul > li::before { background: none; border: .2cqh solid var(--accent); width: .8cqh; height: .8cqh; }
+.msg.bot li div { color: var(--ink-dim); }
+.msg.bot b { font-weight: 700; color: var(--accent); }
 .typing { align-self: flex-start; display: none; gap: .7cqh; padding: 1.8cqh 2.2cqh; border-radius: 2cqh; background: var(--bg-2); }
 .typing i { width: 1cqh; height: 1cqh; border-radius: 50%; background: var(--ink-dim); animation: blink 1.2s infinite ease-in-out; }
 .typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
@@ -650,22 +670,155 @@ function clearCaptions() { setCaption('user', ''); setCaption('avatar', ''); }
 // Avatar replies are grouped by their text events, not by speech events: the
 // text of an answer can arrive before the avatar starts speaking, and the
 // transcript of a reply cut short by the visitor arrives after the new question.
-const chat = { user: null, userFinals: [], userPartial: '', bot: null, botText: '', botOpen: false, draining: false, drainBubble: null, drainTimer: 0 };
+const chat = { user: null, userFinals: [], userPartial: '', bot: null, botText: '', botOpen: false, draining: false, drainBubble: null, drainTimer: 0,
+  lk: false, reply: null, segs: new Map() };
 
 function chatAdd(role, text) {
   const m = document.createElement('div'); m.className = 'msg ' + role;
   const who = document.createElement('div'); who.className = 'who'; who.textContent = role === 'user' ? T().whoYou : T().whoBot;
-  const txt = document.createElement('div'); txt.className = 'txt'; txt.textContent = text;
+  const txt = document.createElement('div'); txt.className = 'txt';
+  if (role === 'bot') answerInto(txt, text, false); else txt.textContent = text;
   m.append(who, txt);
   $('chat').insertBefore(m, $('typing'));   // the typing dots stay last
   chatScroll(true);
   return m;
 }
-function chatSet(m, text) {
+// done: the reply is complete (not still arriving), so its last sentence can be laid out too
+function chatSet(m, text, done = true) {
   const box = $('chat');
   const follow = box.scrollHeight - box.scrollTop - box.clientHeight < 40;   // unless scrolled up to reread
-  m.querySelector('.txt').textContent = text;
+  const txt = m.querySelector('.txt');
+  if (m.classList.contains('bot')) answerInto(txt, text, done); else txt.textContent = text;
   chatScroll(follow);
+}
+
+/* An answer is laid out for reading: a lead sentence, then the rest as bullet
+   points. A numbered list ("1. … 2. …", as the avatar often answers) becomes
+   numbered items, each with its title in bold and its own points below; a list
+   after a colon ("a, b và c", "a; b; c", "- a - b") becomes bullets; a closing
+   line ("Quý vị cần thêm gì không?") sits apart. Only the display changes: the avatar says the reply as
+   written. The transcript has no line breaks, so the structure is read from the
+   punctuation. */
+const NOT_A_STOP = /(?:^|[\s(.])(?:TS|ThS|GS|PGS|ĐS|TP|Tp|NCS|BS|KS|CN|TT|ĐH|St|Mr|Mrs|Ms|Dr|Prof|No|vs|[A-ZĐ])\.$/;
+function splitSentences(t) {
+  const done = []; let start = 0;
+  const re = /[.!?…]+["”’)]*(?=\s)|\n/g;
+  for (let m; (m = re.exec(t)); ) {
+    const end = m.index + m[0].length;
+    if (m[0] === '.' && NOT_A_STOP.test(t.slice(start, end))) continue;   // "TS." is not the end of a sentence
+    const s = t.slice(start, end).trim(); if (s) done.push(s);
+    start = end;
+  }
+  return { done, open: t.slice(start).trim() };
+}
+const words = s => s.split(/\s+/).filter(Boolean).length;
+const capital = s => s.charAt(0).toUpperCase() + s.slice(1);
+const trimEnd = s => s.replace(/[\s.;,!…]+$/, '');
+// a closing line: a question, or an offer of more help
+const isClosing = s => /\?["”’)]*$/.test(s) || /cho (?:tôi|mình|em) biết|hỏi thêm|cần thêm|muốn biết thêm|sẵn sàng hỗ trợ|let me know|anything else/i.test(s);
+function listOf(s) {                         // "Head: a, b và c." → { head, items } or null
+  const i = s.indexOf(': ');
+  if (i < 1) {                               // "a; b; c." with no head
+    const parts = trimEnd(s).split(/\s*;\s*/).filter(Boolean);
+    return parts.length >= 3 ? { head: '', items: parts.map(capital) } : null;
+  }
+  const head = s.slice(0, i + 1), body = trimEnd(s.slice(i + 2));
+  let items;
+  if (/^[-–•]\s/.test(body)) items = body.slice(2).split(/(?<!\d)\s[-–•]\s(?!\d)/);   // "- a - b", not "07:30 - 08:30"
+  else if (body.includes(';')) items = body.split(/\s*;\s*/);
+  else {
+    items = body.split(/,\s+/);
+    const last = items.pop().replace(/^(?:và|hoặc|cùng|and|or)\s+/i, '');
+    const j = Math.max(last.lastIndexOf(' và '), last.lastIndexOf(' and '));
+    if (j > 0) items.push(last.slice(0, j), last.slice(j).replace(/^\s*(?:và|and)\s+/, '')); else items.push(last);
+    if (items.length < 3 || items.some(x => words(x) > 8)) return null;   // a clause, not a list
+  }
+  items = items.map(x => trimEnd(x.trim())).filter(Boolean);
+  return items.length >= 2 ? { head, items: items.map(capital) } : null;
+}
+// "Intro: 1. A. 2. B. 3. C. Closing." → { intro, items, after } or null
+function numbered(t) {
+  const marks = []; let want = 1;
+  for (const m of t.matchAll(/(^|\s)(\d{1,2})\.\s+/g)) {
+    if (+m[2] !== want) continue;
+    marks.push({ at: m.index + m[1].length, body: m.index + m[0].length }); want++;
+  }
+  // "…sau: 1. A" (still arriving, or cut short) is a list already
+  if (marks.length < 2 && !(marks.length === 1 && /:\s*$/.test(t.slice(0, marks[0].at)))) return null;
+  const items = marks.map((k, i) => t.slice(k.body, i + 1 < marks.length ? marks[i + 1].at : t.length).trim());
+  // the last item ends with its first sentence; the rest closes the answer
+  const last = splitSentences(items.pop());
+  const rest = [...last.done, last.open].filter(Boolean);
+  items.push(rest.shift() || '');
+  return { intro: t.slice(0, marks[0].at).trim(), items: items.filter(Boolean), after: rest };
+}
+// dates and times stand out
+const KEY_FACT = /(?<![\p{L}\d])(?:(?:ngày )?\d{1,2} tháng \d{1,2}(?: năm \d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2} giờ(?: \d{1,2}(?: phút)?)?|\d{1,2}h\d{0,2}|\d{1,2}:\d{2}(?: ?[ap]\.?m\.?)?|năm \d{4}|(?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}(?:, \d{4})?|\d{1,2} ?[ap]\.?m\.?)(?![\p{L}\d])/giu;
+function rich(el, text) {
+  let at = 0;
+  for (const m of text.matchAll(KEY_FACT)) {
+    if (m.index > at) el.append(text.slice(at, m.index));
+    const b = document.createElement('b'); b.textContent = m[0]; el.append(b);
+    at = m.index + m[0].length;
+  }
+  if (at < text.length) el.append(text.slice(at));
+  return el;
+}
+const node = (tag, cls, t) => { const n = document.createElement(tag); if (cls) n.className = cls; return rich(n, t); };
+const bullets = items => { const ul = document.createElement('ul'); for (const x of items) ul.append(node('li', '', x)); return ul; };
+// one numbered item: "Title (07:30 - 08:30): a; b" → title, points below; "Title - what it means" → title, text
+function itemNode(x) {
+  const li = document.createElement('li');
+  const c = x.search(/:(?:\s|$)/);            // also "Title:" with its points still to come
+  if (c > 0 && words(x.slice(0, c)) <= 20) {
+    li.append(node('strong', '', x.slice(0, c)));
+    const rest = trimEnd(x.slice(c + 1).trim());
+    const parts = (/^[-–•]\s/.test(rest) ? rest.slice(2).split(/(?<!\d)\s[-–•]\s(?!\d)/) : rest.split(/\s*;\s*/)).map(trimEnd).filter(Boolean);
+    if (parts.length >= 2) li.append(bullets(parts.map(capital)));
+    else if (rest) li.append(node('div', '', capital(rest)));
+    return li;
+  }
+  const d = x.match(/^(.{2,60}?)\s[-–—]\s(.+)$/);
+  if (d && !/\s[-–—]\s/.test(d[2]) && !/\d$/.test(d[1]) && words(d[1]) <= 6 && words(d[2]) >= 3) {
+    li.append(node('strong', '', d[1]), node('div', '', capital(trimEnd(d[2]))));
+    return li;
+  }
+  return rich(li, trimEnd(x));
+}
+function answerInto(el, text, done) {
+  el.replaceChildren();
+  text = text.trim(); if (!text) return;
+  const num = numbered(text);
+  if (num) {
+    if (num.intro) el.append(node('p', 'lead', num.intro));
+    const ol = document.createElement('ol');
+    for (const x of num.items) ol.append(itemNode(x));
+    el.append(ol);
+    for (const s of num.after) el.append(node('p', isClosing(s) ? 'tail' : '', s));
+    return;
+  }
+  const { done: full, open } = splitSentences(text);
+  const units = full.map(s => listOf(s) || s);
+  if (open) units.push(done ? (listOf(open) || open) : open);   // a sentence still arriving stays as it is
+  // a closing line ("Bạn muốn biết thêm gì không?") sits apart
+  let tail = null;
+  if (done && units.length > 1 && typeof units.at(-1) === 'string' && isClosing(units.at(-1))) tail = units.pop();
+  // the lead: the first sentence, joined by the next ones while it is only "Dạ vâng!"
+  let first = units.shift();
+  while (typeof first === 'string' && words(first) < 5 && typeof units[0] === 'string') first += ' ' + units.shift();
+  if (typeof first === 'string') el.append(node('p', units.length || tail ? 'lead' : '', first));
+  else { if (first.head) el.append(node('p', 'lead', first.head)); el.append(bullets(first.items)); }
+  // plain sentences become bullets, unless the answer has a list of its own:
+  // then they stay sentences, so they don't read as more items of that list
+  const asText = typeof first !== 'string' || units.some(u => typeof u !== 'string');
+  let run = [];
+  const flush = () => { if (run.length) el.append(bullets(run)); run = []; };
+  for (const u of units) {
+    if (typeof u === 'string') { if (asText) el.append(node('p', '', u)); else run.push(u); continue; }
+    flush(); if (u.head) el.append(node('p', 'sub', u.head)); el.append(bullets(u.items));
+  }
+  flush();
+  if (tail) el.append(node('p', 'tail', tail));
 }
 function chatScroll(toEnd) {
   const box = $('chat');
@@ -676,11 +829,12 @@ function chatScroll(toEnd) {
 function chatReset() {
   for (const m of $('chat').querySelectorAll('.msg')) m.remove();
   clearTimeout(chat.drainTimer);
-  Object.assign(chat, { user: null, userFinals: [], userPartial: '', bot: null, botText: '', botOpen: false, draining: false, drainBubble: null });
+  Object.assign(chat, { user: null, userFinals: [], userPartial: '', bot: null, botText: '', botOpen: false, draining: false, drainBubble: null, lk: false, reply: null });
+  chat.segs.clear();
   chatScroll(true);
 }
 function chatUserStart() {                  // tap 1: a "Listening…" bubble
-  chat.userFinals = []; chat.userPartial = '';
+  chat.userFinals = []; chat.userPartial = ''; replyClose();
   chat.user = chatAdd('user', T().listeningMsg);
   chat.user.classList.add('listening'); chat.user.dataset.empty = '1';
 }
@@ -698,11 +852,16 @@ function chatUserStop() {                   // tap 2: drop the bubble later if n
 }
 function chatUserCancel() { if (chat.user && chat.user.dataset.empty) chat.user.remove(); chat.user = null; }
 // The SDK echoes a typed question back as a user transcript; it lands in this same bubble.
-function chatAsk(q) { Object.assign(chat, { userFinals: [], userPartial: '' }); chat.user = chatAdd('user', q); }
+function chatAsk(q) { Object.assign(chat, { userFinals: [], userPartial: '' }); replyClose(); chat.user = chatAdd('user', q); }
 // The visitor cut the avatar off. Text of that reply keeps arriving for a moment,
 // ending with its transcript (what was actually said): ignore the text, use the
 // transcript for the cut-off bubble, then carry on with the new reply.
 function chatInterrupt() {
+  if (chat.lk) {                             // the transcript says itself which reply a segment belongs to
+    const r = chat.reply;
+    if (r && !r.done) { r.cut = true; showReply(r); }
+    replyClose(); return;
+  }
   chat.drainBubble = chat.botOpen ? chat.bot : null;
   if (chat.drainBubble) chatSet(chat.drainBubble, chat.botText.trim() + '…');
   chat.botOpen = false; chat.draining = true;
@@ -710,7 +869,7 @@ function chatInterrupt() {
   chat.drainTimer = setTimeout(() => { chat.draining = false; chat.drainBubble = null; }, 8000);   // in case no transcript comes (slow servers take ~6 s)
 }
 function botChunk(t) {                       // part of the reply being generated
-  if (chat.draining) return;
+  if (chat.lk || chat.draining) return;
   if (!chat.botOpen) {                       // first text of a new reply
     Object.assign(chat, { botOpen: true, bot: null, botText: '' });
     thinking = false; render();
@@ -720,6 +879,7 @@ function botChunk(t) {                       // part of the reply being generate
   showBot();
 }
 function botFinal(t) {                       // the whole reply (or the part spoken before a cut)
+  if (chat.lk) return;
   if (chat.draining) {
     clearTimeout(chat.drainTimer); chat.draining = false;
     if (chat.drainBubble && t) chatSet(chat.drainBubble, t.trim() + '…');
@@ -734,7 +894,44 @@ function botFinal(t) {                       // the whole reply (or the part spo
 function showBot() {
   setCaption('avatar', chat.botText);
   if (!chat.botText) return;
-  if (!chat.bot) chat.bot = chatAdd('bot', chat.botText); else chatSet(chat.bot, chat.botText);
+  if (!chat.bot) chat.bot = chatAdd('bot', '');
+  chatSet(chat.bot, chat.botText, !chat.botOpen);
+}
+// LiveKit's own transcript of the avatar's speech. Unlike the SDK's text chunks
+// (which come sooner but can drop words) it is complete, and it follows the voice
+// word by word. Once it shows up the chat uses it: each segment is tagged, so a
+// reply cut short gets its last words in its own bubble, wherever the chat is by then.
+function replyClose() { if (chat.reply) chat.reply.closed = true; }
+function botSegment(g) {
+  const text = (g.text || '').trim();
+  if (!chat.lk) {                            // switch over: the reply shown from chunks keeps its bubble
+    chat.lk = true; log('chat: using the LiveKit transcript');
+    const m = chat.botOpen ? chat.bot : chat.draining ? chat.drainBubble : null;
+    clearTimeout(chat.drainTimer);
+    if (m) chat.reply = { m, parts: new Map(), closed: !chat.botOpen, cut: !chat.botOpen, done: false };
+    Object.assign(chat, { botOpen: false, draining: false, drainBubble: null });
+  }
+  let r = chat.segs.get(g.id);
+  if (!r) {
+    if (!text) return;
+    r = chat.reply && !chat.reply.closed ? chat.reply : null;   // one reply can come in several segments
+    if (!r) {
+      r = chat.reply = { m: chatAdd('bot', ''), parts: new Map(), closed: false, cut: false, done: false };
+      thinking = false; render();
+    }
+    chat.segs.set(g.id, r);
+  }
+  r.parts.set(g.id, { text, final: !!g.final });
+  showReply(r);
+}
+function showReply(r) {
+  const parts = [...r.parts.values()];
+  let text = parts.map(x => x.text).filter(Boolean).join(' ');
+  r.done = parts.length > 0 && parts.every(x => x.final);
+  if (r === chat.reply && !r.closed) setCaption('avatar', text);
+  if (!text) return;
+  if (r.cut) text = text.replace(/[\s.,;:!…]+$/, '') + '…';
+  chatSet(r.m, text, r.done || r.cut);
 }
 $('chat').addEventListener('scroll', () => {
   chatScroll(false);
@@ -895,6 +1092,10 @@ function wire(s) {
     if (session !== s) return;
     avatarSpeaking = false; lastActivity = Date.now(); render();
   });
+  s.room?.on('transcriptionReceived', (segs, p) => {   // see botSegment
+    if (session !== s || (p && p === s.room.localParticipant)) return;
+    for (const g of segs || []) botSegment(g);
+  });
   s.on(AgentEventsEnum.AVATAR_TRANSCRIPTION_CHUNK, e => {
     if (session !== s || !e || !e.text) return;
     botChunk(e.text);
@@ -1049,7 +1250,10 @@ function askText(q) {
 // Wait (briefly) for the greeting to begin so the interrupt has something to cut.
 async function askWhenReady(s, q) {
   pendingQuestion = null;
-  for (let t = 0; t < 30 && session === s && (state !== 'live' || !avatarSpeaking); t++) await new Promise(r => setTimeout(r, 100));
+  // …and for its text, so the greeting's bubble comes before the question's
+  let t = 0;
+  for (; t < 30 && session === s && (state !== 'live' || !avatarSpeaking || !(chat.bot || chat.reply)); t++) await new Promise(r => setTimeout(r, 100));
+  log(`asking after ${t * 100} ms`, { state, avatarSpeaking, text: !!(chat.bot || chat.reply) });
   if (session === s && state === 'live') askText(q);
 }
 
