@@ -273,6 +273,9 @@ body.st-live .showcase { opacity: 0; visibility: hidden; }
 .msg.bot li ul { margin-top: .5cqh; gap: .3cqh; color: var(--ink-dim); }
 .msg.bot li ul > li::before { background: none; border: .2cqh solid var(--accent); width: .8cqh; height: .8cqh; }
 .msg.bot li div { color: var(--ink-dim); }
+.msg.bot ul.slots { gap: 1.4cqh; }
+.msg.bot ul.slots > li { padding-left: 1.6cqh; border-left: .3cqh solid var(--accent); }
+.msg.bot ul.slots > li::before { content: none; }
 .msg.bot b { font-weight: 700; color: var(--accent); }
 .typing { align-self: flex-start; display: none; gap: .7cqh; padding: 1.8cqh 2.2cqh; border-radius: 2cqh; background: var(--bg-2); }
 .typing i { width: 1cqh; height: 1cqh; border-radius: 50%; background: var(--ink-dim); animation: blink 1.2s infinite ease-in-out; }
@@ -498,77 +501,103 @@ const TEXT = {
 // context in LiveAvatar can answer.
 const QUESTIONS = {
   vi: [
-    { title: 'Sự kiện', items: [
-      'DAV Alumni Day 2026 có những hoạt động gì?',
-      'Ngày hội chính diễn ra khi nào, ở đâu?',
-      'Hoạt động chào đón Alumni ngày 20–21/11 gồm những gì?',
-      'Chương trình sáng ngày 22/11 gồm những phần nào?',
-      'Mấy giờ bắt đầu check-in?',
-      'Ai biểu diễn văn nghệ chào mừng?',
-      'Những ai sẽ phát biểu tại buổi lễ?',
-      'Phần hội có những hoạt động gì?',
-      'Có tour tham quan Học viện không?',
-      'Có tiệc nhẹ và giao lưu không, vào lúc nào?',
-      'Triển lãm được tổ chức ở đâu?',
-      'Ai được mời tham dự chương trình?',
-      'Lớp tôi có thể đăng ký phòng họp lớp không?',
+    { title: 'Về Học viện', items: [
+      'Học viện Ngoại giao được thành lập khi nào và đã đổi tên những lần nào?',
+      'Ban Giám đốc Học viện hiện gồm những ai và phụ trách lĩnh vực nào?',
+      'Học viện đang đào tạo những ngành cử nhân nào?',
+      'Học viện có những đơn vị trực thuộc nào?',
+      'Sứ mạng, tầm nhìn và giá trị cốt lõi của Học viện là gì?',
+      'Học viện đã nhận được những huân chương, phần thưởng nào?',
+      'Quy mô đào tạo và đội ngũ giảng viên của Học viện hiện nay ra sao?',
+      'Các chương trình đào tạo của Học viện có được kiểm định quốc tế không?',
+      'Từ Khóa 53 năm 2026, Học viện tuyển sinh những ngành khu vực học nào?',
+      'Học viện hợp tác quốc tế với những mạng lưới và đối tác nào?',
+      'Viện Nghiên cứu chiến lược ngoại giao và Viện Biển Đông được thành lập khi nào?',
+      'Phòng Truyền thống ở đâu và có ý nghĩa gì?',
+      'Phòng Geneva, phòng Berlin, phòng Pháp ngữ và phòng Văn hóa Nhật Bản do đơn vị nào tài trợ?',
+      'Thư viện Học viện có bao nhiêu tài liệu và nằm ở đâu?',
+      'Học viện có những không gian đặc biệt nào đáng tham quan?',
     ] },
-    { title: 'Mạng lưới Alumni', items: [
-      'Làm sao để tham gia mạng lưới DAV Alumni?',
-      'Tôi có thể liên hệ DAV Alumni bằng cách nào?',
-      'Mạng lưới DAV Alumni có website không?',
-      'DAV Alumni Network bảo vệ dữ liệu cá nhân thế nào?',
+    { title: 'Cựu sinh viên', items: [
+      'Bộ trưởng Bộ Ngoại giao hiện nay là ai và là cựu sinh viên khóa nào?',
+      'Những cựu sinh viên nào đang giữ chức Thứ trưởng Bộ Ngoại giao?',
+      'Ai là Thứ trưởng Thường trực Bộ Ngoại giao và là cựu sinh viên khóa nào?',
+      'Những cựu sinh viên nào từng giữ chức Phó Thủ tướng hoặc Bộ trưởng Bộ Ngoại giao?',
+      'Những cựu sinh viên nào hiện là Ủy viên Bộ Chính trị hoặc Ủy viên Trung ương Đảng?',
+      'Những cựu sinh viên nào từng làm Đại sứ Việt Nam tại Hoa Kỳ?',
+      'Ai là Đại sứ, Trưởng phái đoàn đại diện thường trực Việt Nam tại Liên hợp quốc hiện nay?',
+      'Cựu sinh viên nào từng giữ chức Tổng Thư ký ASEAN?',
+      'Cựu sinh viên nào đang hoạt động tại các tổ chức quốc tế như UNESCO, WHO, UNDP?',
+      'Ai là Thẩm phán Tòa án Luật biển quốc tế nhiệm kỳ 2026 đến 2035?',
+      'Có những cựu sinh viên nào từng làm Giám đốc hoặc Phó Giám đốc Học viện?',
+      'Có những cựu sinh viên nào thành công trong khu vực doanh nghiệp tư nhân?',
+      'Những cựu sinh viên thủ khoa nào đã trở thành gương mặt tiêu biểu?',
+      'Có cựu sinh viên nào đã trở lại Học viện làm giảng viên không?',
     ] },
-    { title: 'Học viện Ngoại giao', items: [
-      'Học viện Ngoại giao được thành lập khi nào?',
-      'Sứ mạng của Học viện Ngoại giao là gì?',
-      'Tầm nhìn của Học viện là gì?',
-      'Giá trị cốt lõi của Học viện là gì?',
-      'Khẩu hiệu hành động của Học viện là gì?',
-      'Triết lý giáo dục của Học viện là gì?',
-      'Giám đốc Học viện Ngoại giao là ai?',
-    ] },
-    { title: 'Cựu sinh viên tiêu biểu', items: [
-      'Kể cho tôi về một cựu sinh viên tiêu biểu.',
-      'Kể về Đại sứ Nguyễn Thị Bích Huệ.',
-      'Kể về Đại sứ, GS.TS. Nguyễn Vũ Tùng.',
+    { title: 'Sự kiện và DAV Alumni Network', items: [
+      'Lễ kỷ niệm Ngày Nhà giáo Việt Nam và DAV Alumni Day 2026 diễn ra khi nào, ở đâu?',
+      'Chương trình ngày hội chính, Chủ nhật ngày 22 tháng 11, diễn ra như thế nào?',
+      'Làm thế nào để đăng ký tham dự sự kiện?',
+      'Ngày 20 và 21 tháng 11 có những hoạt động gì?',
+      'Phần Lễ buổi sáng ngày 22 tháng 11 có những nội dung chính nào?',
+      'Sau phần Lễ có những hoạt động trải nghiệm gì?',
+      'Làm sao để đăng ký phòng họp lớp, họp khóa tại Học viện? Ban tổ chức hỗ trợ những gì?',
+      'Triển lãm “Hồi ức” là gì và tôi gửi ảnh, kỷ vật như thế nào?',
+      'Lễ ra mắt Mạng lưới cựu học viên, sinh viên diễn ra lúc mấy giờ?',
+      'Có tiệc nhẹ và gian hàng ẩm thực trong ngày hội không?',
+      'DAV Alumni Network là gì? Sứ mạng, tầm nhìn và khẩu hiệu của Mạng lưới ra sao?',
+      'Ai là Chủ tịch và Ban Điều hành Mạng lưới nhiệm kỳ I (2023 đến 2026)?',
+      'Tôi có thể liên hệ Ban tổ chức và Mạng lưới Alumni qua kênh nào?',
     ] },
   ],
   en: [
-    { title: 'The event', items: [
-      'What happens at DAV Alumni Day 2026?',
-      'When and where is the main day?',
-      'What happens on 20–21 November to welcome alumni?',
-      'What is on the programme on the morning of 22 November?',
-      'What time does check-in start?',
-      'Who performs at the opening?',
-      'Who will speak at the ceremony?',
-      'What is there to do after the ceremony?',
-      'Is there a tour of the Academy?',
-      'Is there a reception for networking, and when?',
-      'Where is the exhibition?',
-      'Who is invited?',
-      'Can my class book a room for a reunion?',
-    ] },
-    { title: 'Alumni Network', items: [
-      'How can I join the DAV Alumni Network?',
-      'How can I contact DAV Alumni?',
-      'Does the DAV Alumni Network have a website?',
-      'How does the DAV Alumni Network protect personal data?',
-    ] },
     { title: 'The Academy', items: [
-      'When was the Diplomatic Academy founded?',
-      'What is the Academy’s mission?',
-      'What is the Academy’s vision?',
-      'What are the Academy’s core values?',
-      'What is the Academy’s motto?',
-      'What is the Academy’s educational philosophy?',
-      'Who is the Director of the Academy?',
+      'When was the Diplomatic Academy founded, and what names has it had?',
+      'Who is on the Academy’s Board of Directors, and what does each oversee?',
+      'Which bachelor’s programmes does the Academy offer?',
+      'Which units make up the Academy?',
+      'What are the Academy’s mission, vision and core values?',
+      'Which orders and awards has the Academy received?',
+      'How many students and lecturers does the Academy have today?',
+      'Are the Academy’s programmes internationally accredited?',
+      'Which area studies programmes does the Academy admit students to from Cohort 53 in 2026?',
+      'Which international networks and partners does the Academy work with?',
+      'When were the Institute for Foreign Policy and Strategic Studies and the East Sea Institute founded?',
+      'Where is the Heritage Room, and why does it matter?',
+      'Who sponsors the Geneva, Berlin, Francophone and Japanese Culture rooms?',
+      'How many items does the Academy library hold, and where is it?',
+      'Which special places at the Academy are worth a visit?',
     ] },
-    { title: 'Notable alumni', items: [
-      'Tell me about a notable alumnus.',
-      'Tell me about Ambassador Nguyễn Thị Bích Huệ.',
-      'Tell me about Ambassador Nguyễn Vũ Tùng.',
+    { title: 'Alumni', items: [
+      'Who is the current Minister of Foreign Affairs, and which cohort were they in?',
+      'Which alumni are currently Deputy Ministers of Foreign Affairs?',
+      'Who is the Permanent Deputy Minister of Foreign Affairs, and which cohort were they in?',
+      'Which alumni have served as Deputy Prime Minister or Minister of Foreign Affairs?',
+      'Which alumni are members of the Politburo or the Party Central Committee?',
+      'Which alumni have served as Vietnam’s Ambassador to the United States?',
+      'Who is Vietnam’s current Ambassador and Permanent Representative to the United Nations?',
+      'Which graduate served as Secretary-General of ASEAN?',
+      'Which alumni work at international organisations such as UNESCO, WHO and UNDP?',
+      'Who is the judge at the International Tribunal for the Law of the Sea for 2026 to 2035?',
+      'Which alumni have been Director or Deputy Director of the Academy?',
+      'Which alumni have done well in the private sector?',
+      'Which top graduates have gone on to become notable figures?',
+      'Have any alumni come back to teach at the Academy?',
+    ] },
+    { title: 'Event and DAV Alumni Network', items: [
+      'When and where are the Teachers’ Day celebration and DAV Alumni Day 2026?',
+      'How will the main day, Sunday 22 November, run?',
+      'How do I register to attend?',
+      'What happens on 20 and 21 November?',
+      'What are the main parts of the ceremony on the morning of 22 November?',
+      'What can I do after the ceremony?',
+      'How do I book a room for a class or cohort reunion, and what do the organisers provide?',
+      'What is the “Hồi ức” (Memories) exhibition, and how do I send photos and keepsakes?',
+      'What time is the launch of the alumni network?',
+      'Is there a reception and food stalls on the day?',
+      'What is the DAV Alumni Network, and what are its mission, vision and slogan?',
+      'Who are the Chair and Executive Board of the Network’s first term (2023 to 2026)?',
+      'How can I contact the organisers and the Alumni Network?',
     ] },
   ],
 };
@@ -736,12 +765,20 @@ function listOf(s) {                         // "Head: a, b và c." → { head, 
   items = items.map(x => trimEnd(x.trim())).filter(Boolean);
   return items.length >= 2 ? { head, items: items.map(capital) } : null;
 }
-// "Intro: 1. A. 2. B. 3. C. Closing." → { intro, items, after } or null
+// a programme by time slot: "07:30 - 08:30: A. 08:30 - 10:30: B."
+const SLOT = /(^|[\s:;.,])((?:[Tt]ừ\s+)?\d{1,2}[:h]\d{2}\s*(?:[-–]|đến)\s*\d{1,2}[:h]\d{2}):(?=\s|$)/g;
+// "Intro: 1. A. 2. B. 3. C. Closing." → { intro, items, after, slots } or null.
+// Time slots are read the same way; the time stays in the item as its title.
 function numbered(t) {
-  const marks = []; let want = 1;
+  let marks = [], want = 1;
   for (const m of t.matchAll(/(^|\s)(\d{1,2})\.\s+/g)) {
     if (+m[2] !== want) continue;
     marks.push({ at: m.index + m[1].length, body: m.index + m[0].length }); want++;
+  }
+  let slots = false;
+  if (marks.length < 2) {
+    const s = [...t.matchAll(SLOT)].map(m => ({ at: m.index + m[1].length, body: m.index + m[1].length }));
+    if (s.length > marks.length) { marks = s; slots = true; }
   }
   // "…sau: 1. A" (still arriving, or cut short) is a list already
   if (marks.length < 2 && !(marks.length === 1 && /:\s*$/.test(t.slice(0, marks[0].at)))) return null;
@@ -750,7 +787,7 @@ function numbered(t) {
   const last = splitSentences(items.pop());
   const rest = [...last.done, last.open].filter(Boolean);
   items.push(rest.shift() || '');
-  return { intro: t.slice(0, marks[0].at).trim(), items: items.filter(Boolean), after: rest };
+  return { intro: t.slice(0, marks[0].at).trim(), items: items.filter(Boolean), after: rest, slots };
 }
 // dates and times stand out
 const KEY_FACT = /(?<![\p{L}\d])(?:(?:ngày )?\d{1,2} tháng \d{1,2}(?: năm \d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|\d{1,2} giờ(?: \d{1,2}(?: phút)?)?|\d{1,2}h\d{0,2}|\d{1,2}:\d{2}(?: ?[ap]\.?m\.?)?|năm \d{4}|(?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}(?:, \d{4})?|\d{1,2} ?[ap]\.?m\.?)(?![\p{L}\d])/giu;
@@ -791,7 +828,8 @@ function answerInto(el, text, done) {
   const num = numbered(text);
   if (num) {
     if (num.intro) el.append(node('p', 'lead', num.intro));
-    const ol = document.createElement('ol');
+    const ol = document.createElement(num.slots ? 'ul' : 'ol');
+    if (num.slots) ol.className = 'slots';
     for (const x of num.items) ol.append(itemNode(x));
     el.append(ol);
     for (const s of num.after) el.append(node('p', isClosing(s) ? 'tail' : '', s));
@@ -1128,7 +1166,9 @@ function goLive() {
   body.classList.add('video-on');
   endsAt = Date.now() + totalMs;
   lastActivity = Date.now();
-  warned = false; idleWarned = false; avatarSpeaking = false; thinking = false;
+  // avatarSpeaking is left alone: the greeting can start before this runs.
+  // (detachVideo clears it when a session ends.)
+  warned = false; idleWarned = false; thinking = false;
   setState('live');
   log('live for', totalMs / 1000, 's');
 }
