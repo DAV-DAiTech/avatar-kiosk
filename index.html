@@ -106,7 +106,7 @@ body[data-layout="vertical"]   #captions { left: 6cqw; right: 6cqw; bottom: 34cq
 .dock { position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
 body[data-layout="vertical"]   .dock { left: 0; right: 0; bottom: 6.5cqh; }
 
-/* ---------- credit line, bottom centre ---------- */
+/* ---------- credit line: bottom centre (vertical), up the right edge (horizontal) ---------- */
 .credit { position: absolute; left: 0; right: 0; bottom: 1.8cqh; z-index: 4; text-align: center; pointer-events: none;
   color: var(--ink-dim); font-size: 1.9cqmin; letter-spacing: .02em; opacity: .85; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
 .credit b { color: var(--accent); font-weight: 600; }
@@ -203,7 +203,14 @@ body[data-layout="horizontal"] .side { display: block; position: absolute; top: 
   background: var(--bg); z-index: 2; border-left: 1px solid rgba(255,255,255,.06); }
 body[data-layout="horizontal"] .brand { top: 4cqh; left: calc(50cqw + 3.5cqw); }
 body[data-layout="horizontal"] .timer { top: 5.2cqh; right: 3.5cqw; }
-body[data-layout="horizontal"] .credit { left: 50cqw; right: 0; }
+/* credit: turned on its side in the right margin, beside the alumni / chat panel, faded at both ends */
+body[data-layout="horizontal"] .credit { left: auto; right: 1.75cqw; top: 50%; bottom: auto;
+  display: flex; align-items: center; gap: 1em; white-space: nowrap; font-size: 1.7cqmin; opacity: .5;
+  transform: translate(50%, -50%) rotate(90deg); }
+body[data-layout="horizontal"] .credit::before,
+body[data-layout="horizontal"] .credit::after { content: ''; width: 12cqmin; height: 1px; }
+body[data-layout="horizontal"] .credit::before { background: linear-gradient(to right, transparent, currentColor); }
+body[data-layout="horizontal"] .credit::after { background: linear-gradient(to left, transparent, currentColor); }
 .showcase, .chatbox { position: absolute; left: 3.5cqw; right: 3.5cqw; top: 17cqh; bottom: 6.5cqh;
   display: flex; flex-direction: column; transition: opacity .5s ease, visibility .5s; }
 .showcase { align-items: center; gap: 1.6cqh; }
@@ -384,7 +391,7 @@ body.debug #debug { display: block; }
   </div>
 
   <div class="overlay" id="thanks"><div><h2 data-t="thanks"></h2><p data-t="thanksSub"></p></div></div>
-  <div class="credit">Developed by <img class="credit-logo" src="assets/daitech-fox.png" alt=""><b>DaiTech</b> – DAV AI and Technology Club</div>
+  <div class="credit"><span>Developed by <img class="credit-logo" src="assets/daitech-fox.png" alt=""><b>DaiTech</b> – DAV AI and Technology Club</span></div>
   <div class="toast" id="toast"></div>
   <div id="corner" aria-hidden="true"></div>
 </div>
